@@ -1,0 +1,1122 @@
+<!doctype html><html><head><meta charset=utf8><meta name=viewport content="width=device-width,initial-scale=1,viewport-fit=cover"><style>:root{color-scheme:light;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}html{scroll-padding-top:env(safe-area-inset-top,0px)}body{margin:0;padding:0;font:14px -apple-system,BlinkMacSystemFont,sans-serif;background:#fff;color:#000}img{max-width:100%}[hidden]:not([hidden=until-found i]){display:none!important}</style></head><body>
+<title>Boys Night</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Heebo:wght@400;500;700;800&family=Secular+One&display=swap" rel="stylesheet">
+<style>
+/* Layout concept: one column app (max 720px). Motif: a card table seen from above with seats around it.
+   Each game type re-skins the tokens (felt, rim, accent). Deliberately a single dark "casino room" look. */
+:root{
+  --font-display:'Secular One','Heebo',system-ui,sans-serif;
+  --font-body:'Heebo',system-ui,-apple-system,'Segoe UI',sans-serif;
+  --bg:#0b1511; --surface:#121f19; --surface-hi:#1a2b23; --line:#2a4136;
+  --fg:#f1ede2; --muted:#93a89c;
+  --accent:#e4b85a; --accent-ink:#1b1405;
+  --win:#52d68f; --lose:#ff7a70;
+  --felt:#14704d; --felt-deep:#0a3a28; --rim:#5b3a20;
+  color-scheme:dark;
+}
+:root[data-game="blackjack"]{
+  --bg:#150a0e; --surface:#211217; --surface-hi:#2c1a21; --line:#4a2a35; --muted:#b39aa2;
+  --accent:#e8bd62; --felt:#8a1a30; --felt-deep:#4a0b19; --rim:#2c1b10;
+}
+:root[data-game="other"]{
+  --bg:#0c0e1d; --surface:#151830; --surface-hi:#1e2242; --line:#323869; --muted:#9aa0c9;
+  --accent:#6fd3c7; --accent-ink:#06201d; --felt:#3a4bb0; --felt-deep:#1a2260; --rim:#20244d;
+}
+*{box-sizing:border-box}
+html,body{margin:0}
+body{
+  background:var(--bg);color:var(--fg);font-family:var(--font-body);font-size:16px;line-height:1.5;
+  padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));
+  padding-block:0;min-height:100%;transition:background .3s;
+}
+button,input{font:inherit;color:inherit}
+button{cursor:pointer}
+h1,h2,h3,p{margin:0}
+.wrap{max-width:1100px;margin:0 auto;padding-block:20px 56px;display:grid;gap:22px;min-width:0}
+.wrap.w-narrow{max-width:720px}
+.num{direction:ltr;unicode-bidi:isolate;display:inline-block;font-variant-numeric:tabular-nums}
+.win{color:var(--win)} .lose{color:var(--lose)}
+:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+
+/* buttons */
+.btn{border:1px solid var(--line);background:var(--surface-hi);color:var(--fg);border-radius:10px;padding:11px 16px;font-weight:700;line-height:1.2;transition:transform .08s,background .15s}
+.btn:hover{background:var(--line)}
+.btn:active{transform:scale(.98)}
+.btn:disabled{opacity:.4;cursor:not-allowed}
+.btn-primary{background:var(--accent);color:var(--accent-ink);border-color:transparent}
+.btn-primary:hover{background:var(--accent);filter:brightness(1.08)}
+.btn-ghost{background:transparent}
+.btn-danger{color:var(--lose)}
+.btn-sm{padding:8px 12px;font-size:14px;border-radius:8px}
+.btn-lg{padding:16px 28px;font-size:19px;border-radius:12px}
+.btn-block{width:100%}
+.link{background:none;border:0;padding:0;color:var(--accent);text-decoration:underline;font-weight:700}
+
+/* typography */
+.eyebrow{font-size:12px;font-weight:800;letter-spacing:.3em;color:var(--accent);direction:ltr;text-align:start}
+.logo{font-family:var(--font-display);font-weight:400;font-size:clamp(60px,18vw,112px);line-height:.95;text-wrap:balance}
+.lead{font-size:18px;color:var(--muted);max-width:34ch;text-wrap:pretty}
+.sec{font-family:var(--font-display);font-weight:400;font-size:22px}
+.muted{color:var(--muted)}
+small{font-size:12px;color:var(--muted)}
+
+/* welcome */
+.hero{display:grid;gap:26px;padding-top:12px}
+.hero-art{position:relative;height:200px;direction:ltr;max-width:340px}
+.pcard{position:absolute;bottom:0;left:30px;width:94px;height:132px;border-radius:10px;background:#f4efe3;color:#1d1d1d;
+  box-shadow:0 8px 22px rgba(0,0,0,.45);display:flex;flex-direction:column;justify-content:space-between;padding:8px 10px;
+  transform-origin:50% 120%;font-weight:800}
+.pcard span{font-size:24px;line-height:1}
+.pcard i{font-style:normal;font-size:44px;line-height:1;align-self:center;margin-bottom:10px}
+.pcard.red{color:#c4243a}
+.c1{transform:rotate(-16deg)} .c2{transform:translateX(34px) rotate(-2deg)} .c3{transform:translateX(68px) rotate(12deg)}
+.chips{position:absolute;right:0;bottom:8px;width:84px;height:100px}
+.chip{--c:#c0392b;position:absolute;width:64px;height:64px;border-radius:50%;
+  background:repeating-conic-gradient(var(--c) 0 18deg,#f4efe3 18deg 36deg);box-shadow:0 5px 12px rgba(0,0,0,.5)}
+.chip::after{content:'';position:absolute;inset:10px;border-radius:50%;background:var(--c);border:2px dashed rgba(255,255,255,.55)}
+.chip:nth-child(1){left:0;bottom:0} .chip:nth-child(2){left:20px;bottom:14px} .chip:nth-child(3){left:6px;bottom:30px}
+.resume{display:grid;gap:12px}
+.resume-top{display:flex;justify-content:space-between;gap:12px;align-items:center;flex-wrap:wrap}
+.resume-top b{font-family:var(--font-display);font-weight:400;font-size:20px}
+.row-btns{display:flex;gap:10px;flex-wrap:wrap}
+.card{background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:16px}
+.tiles{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px}
+.tile{display:grid;gap:10px;justify-items:center;text-align:center;padding:18px 8px;border-radius:14px;background:var(--surface);border:1px solid var(--line);transition:border-color .15s,transform .1s}
+.tile:hover{border-color:var(--accent);transform:translateY(-2px)}
+.tile b{font-size:16px}
+.tile .gl{height:52px;display:grid;place-items:center;font-family:var(--font-display);font-size:38px;line-height:1}
+.chip.mini{position:relative;width:46px;height:46px;box-shadow:none}
+.chip.mini::after{inset:7px}
+.steps{display:grid;gap:12px;padding:0;margin:0;list-style:none;counter-reset:s}
+.steps li{display:grid;grid-template-columns:34px 1fr;gap:12px;align-items:start;counter-increment:s}
+.steps li::before{content:counter(s);width:34px;height:34px;border-radius:50%;background:var(--surface-hi);border:1px solid var(--line);display:grid;place-items:center;font-weight:800;color:var(--accent)}
+.steps b{display:block}
+
+/* setup */
+.top-simple{display:flex;align-items:center;justify-content:space-between;gap:12px}
+.panel{background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:16px;display:grid;gap:14px}
+.panel h2{font-family:var(--font-display);font-weight:400;font-size:20px}
+.hint{font-size:14px;color:var(--muted);text-wrap:pretty}
+.opts{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px}
+.opt{display:grid;gap:6px;justify-items:center;padding:12px 6px;border-radius:12px;border:1.5px solid var(--line);background:var(--surface-hi);font-weight:700;text-align:center}
+.opt[aria-pressed="true"]{border-color:var(--accent);background:color-mix(in srgb,var(--accent) 14%,var(--surface-hi))}
+.opt .gl{height:38px;display:grid;place-items:center;font-family:var(--font-display);font-size:28px;line-height:1}
+.seg{display:grid;grid-auto-flow:column;grid-auto-columns:1fr;background:var(--surface-hi);border:1px solid var(--line);border-radius:10px;padding:3px;gap:3px}
+.seg button{border:0;background:transparent;padding:9px 6px;border-radius:8px;font-weight:700;color:var(--muted)}
+.seg button[aria-pressed="true"]{background:var(--accent);color:var(--accent-ink)}
+.field{display:grid;gap:6px;min-width:0}
+.field>span,.lbl{font-size:13px;font-weight:700;color:var(--muted)}
+.input{width:100%;min-width:0;background:var(--surface-hi);border:1px solid var(--line);border-radius:8px;padding:11px 12px;font-size:16px;color:var(--fg)}
+.input::placeholder{color:#6f8478}
+.two{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.stepper{display:flex;align-items:center;gap:14px}
+.stepper button{width:44px;height:44px;border-radius:50%;border:1px solid var(--line);background:var(--surface-hi);font-size:22px;font-weight:700;line-height:1}
+.stepper output{font-family:var(--font-display);font-size:34px;min-width:2ch;text-align:center;font-variant-numeric:tabular-nums}
+.swrow{display:flex;justify-content:space-between;align-items:center;gap:12px}
+.swrow b{display:block}
+.sw{flex:none;width:48px;height:28px;border-radius:99px;border:0;background:var(--line);position:relative;transition:background .15s}
+.sw::after{content:'';position:absolute;top:3px;inset-inline-start:3px;width:22px;height:22px;border-radius:50%;background:#fff;transition:transform .15s}
+.sw[aria-checked="true"]{background:var(--accent)}
+.sw[aria-checked="true"]::after{transform:translateX(-20px)}
+.names{display:grid;gap:8px}
+.nm{display:grid;grid-template-columns:36px 1fr;gap:10px;align-items:center}
+.av{width:38px;height:38px;border-radius:50%;display:grid;place-items:center;font-weight:800;color:#fff;flex:none;font-size:16px;border:2px solid rgba(255,255,255,.18)}
+.av.sm{width:32px;height:32px;font-size:14px}
+.err{color:var(--lose);font-size:14px;font-weight:500}
+
+/* game */
+.top{position:sticky;top:env(safe-area-inset-top,0px);z-index:20;background:color-mix(in srgb,var(--bg) 92%,transparent);backdrop-filter:blur(8px);
+  display:flex;align-items:center;justify-content:space-between;gap:10px;padding-block:10px;margin-top:-20px;border-bottom:1px solid var(--line)}
+.ttl{display:grid;line-height:1.2;text-align:center;min-width:0}
+.ttl b{font-family:var(--font-display);font-weight:400;font-size:21px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.ttl small{white-space:nowrap}
+.stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(110px,1fr));gap:10px}
+.stats>div,.stats>button{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:10px 12px;display:grid;gap:2px;text-align:start;color:inherit;min-width:0}
+.stats>button:hover{border-color:var(--accent)}
+.stats b{font-family:var(--font-display);font-weight:400;font-size:22px}
+.table{position:relative;aspect-ratio:16/12;width:100%;max-width:100%;margin-block:4px}
+.felt{position:absolute;inset:8% 3%;border-radius:50%;
+  background:radial-gradient(ellipse at 50% 38%,var(--felt) 0%,var(--felt-deep) 100%);
+  box-shadow:0 0 0 7px var(--rim),0 0 0 8px rgba(0,0,0,.45),inset 0 0 46px rgba(0,0,0,.5);
+  display:grid;place-content:center;text-align:center;gap:2px}
+.t-blackjack .felt{inset:2% 3% 5%;border-radius:7% 7% 50% 50% / 7% 7% 78% 78%}
+.felt::before{content:'';position:absolute;inset:11%;border:1.5px solid rgba(255,255,255,.14);border-radius:inherit;pointer-events:none}
+.t-blackjack .felt::before{inset:10% 8% 14%}
+.pot small{color:rgba(255,255,255,.7);letter-spacing:.05em}
+.pot b{display:block;font-family:var(--font-display);font-weight:400;font-size:clamp(24px,6.4vw,38px);line-height:1.1;color:#fff}
+.dlr{font-size:12px;color:rgba(255,255,255,.72)}
+.seat{position:absolute;transform:translate(-50%,-50%);display:grid;justify-items:center;gap:1px;width:64px;transition:opacity .2s}
+.seat .sn{font-size:11px;font-weight:700;max-width:64px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;text-shadow:0 1px 3px rgba(0,0,0,.8)}
+.seat .sa{font-size:11px;font-weight:700;background:rgba(0,0,0,.55);border-radius:99px;padding:0 6px}
+.seat .sd{font-size:10px;font-weight:800;color:var(--accent);line-height:1}
+.seat.out{opacity:.8}
+.seat.out .av{filter:grayscale(.7)}
+.seat.bank .av{background:var(--accent)!important;color:var(--accent-ink)}
+.seats-flat{display:flex;flex-wrap:wrap;gap:14px 10px;justify-content:center;padding:6px 0}
+.seats-flat .seat{position:static;transform:none}
+.list-h{display:flex;align-items:center;justify-content:space-between;gap:10px}
+.plist{display:grid;gap:12px}
+.pl{background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:14px;display:grid;gap:12px}
+.pl.out{background:transparent;border-style:dashed}
+.pl-head{display:grid;grid-template-columns:auto 1fr auto;gap:12px;align-items:center}
+.who{min-width:0;display:grid;gap:2px}
+.who b{font-size:17px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.tag{display:inline-block;font-size:11px;font-weight:800;padding:1px 8px;border-radius:99px;background:var(--surface-hi);border:1px solid var(--line);color:var(--accent);margin-inline-start:6px;vertical-align:middle}
+.fig{text-align:end;display:grid;line-height:1.15}
+.fig b{font-family:var(--font-display);font-weight:400;font-size:24px}
+.meter{height:6px;border-radius:99px;background:var(--surface-hi);overflow:hidden}
+.meter i{display:block;height:100%;background:var(--accent);border-radius:99px}
+.meter.full i{background:var(--lose)}
+.meta{display:flex;justify-content:space-between;gap:10px;font-size:13px;color:var(--muted);flex-wrap:wrap}
+.acts{display:flex;gap:8px;flex-wrap:wrap}
+.acts .btn{flex:1 1 auto}
+.endbar{display:grid;gap:8px;padding-top:6px}
+
+/* finish */
+.frows{display:grid;gap:10px}
+.fr{display:grid;grid-template-columns:1fr minmax(110px,150px);gap:12px;align-items:center;padding:12px;background:var(--surface);border:1px solid var(--line);border-radius:12px}
+.fr .who small{display:block}
+.fr.done{background:transparent;border-style:dashed}
+.fsum{display:grid;gap:10px;padding:16px;border-radius:14px;background:var(--surface-hi);border:1px solid var(--line)}
+.fsum .line{display:flex;justify-content:space-between;gap:10px}
+.fsum .line b{font-variant-numeric:tabular-nums}
+
+/* result */
+.rhead{display:grid;gap:6px}
+.rhead h1{font-family:var(--font-display);font-weight:400;font-size:clamp(34px,9vw,52px);line-height:1.05}
+.bars{display:grid;gap:10px}
+.brow{display:grid;grid-template-columns:minmax(64px,92px) 1fr minmax(70px,auto);gap:10px;align-items:center}
+.brow .bn{font-weight:700;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.btrack{position:relative;height:14px;direction:ltr;background:var(--surface-hi);border-radius:99px;overflow:hidden}
+.btrack::after{content:'';position:absolute;left:50%;top:0;bottom:0;width:1px;background:var(--line)}
+.bfill{position:absolute;top:0;bottom:0}
+.bfill.w{left:50%;background:var(--win);border-radius:0 99px 99px 0}
+.bfill.l{right:50%;background:var(--lose);border-radius:99px 0 0 99px}
+.brow>b{text-align:end;font-variant-numeric:tabular-nums}
+.debt{display:grid;gap:12px}
+.debt-h{display:flex;justify-content:space-between;gap:10px;align-items:baseline;flex-wrap:wrap}
+.debt-h b{font-family:var(--font-display);font-weight:400;font-size:20px}
+.split{display:flex;height:8px;border-radius:99px;overflow:hidden;gap:2px;direction:ltr}
+.split i{display:block;height:100%}
+.tr{display:grid;grid-template-columns:auto 1fr auto;gap:12px;align-items:center;padding:10px 12px;background:var(--surface-hi);border-radius:10px;border:1px solid var(--line)}
+.tr.paid{opacity:.55}
+.tr.paid .what{text-decoration:line-through}
+.tr .what{min-width:0}
+.tr .what small{display:block}
+.tr .amt{font-family:var(--font-display);font-size:20px}
+.chk{width:26px;height:26px;border-radius:8px;border:2px solid var(--line);background:transparent;display:grid;place-items:center;padding:0;color:var(--accent-ink)}
+.chk[aria-checked="true"]{background:var(--accent);border-color:var(--accent)}
+.chk svg{width:16px;height:16px;opacity:0}
+.chk[aria-checked="true"] svg{opacity:1}
+.all-ok{text-align:center;padding:26px 16px;display:grid;gap:6px}
+.all-ok b{font-family:var(--font-display);font-weight:400;font-size:22px}
+a.btn{text-decoration:none;display:inline-block;text-align:center}
+
+/* modal + toast */
+.ov{position:fixed;inset:0;z-index:50;background:rgba(0,0,0,.62);display:flex;align-items:flex-end;justify-content:center;
+  padding-left:max(0px,env(safe-area-inset-left,0px));padding-right:max(0px,env(safe-area-inset-right,0px));backdrop-filter:blur(2px)}
+.sheet{width:100%;max-width:520px;max-height:92%;overflow:auto;background:var(--surface);border:1px solid var(--line);border-radius:18px 18px 0 0;
+  padding:18px 18px calc(18px + env(safe-area-inset-bottom,0px));display:grid;gap:14px;animation:up .18s ease-out}
+@keyframes up{from{transform:translateY(24px);opacity:0}to{transform:none;opacity:1}}
+@media (min-width:640px){.ov{align-items:center}.sheet{border-radius:18px}}
+.sheet-h{display:flex;justify-content:space-between;align-items:center;gap:10px}
+.sheet-h h3{font-family:var(--font-display);font-weight:400;font-size:22px}
+.x{width:36px;height:36px;border-radius:50%;border:1px solid var(--line);background:var(--surface-hi);font-size:20px;line-height:1}
+.sheet-f{display:grid;gap:10px}
+.qchips{display:flex;gap:8px;flex-wrap:wrap}
+.qc{border:1px solid var(--line);background:var(--surface-hi);border-radius:99px;padding:6px 14px;font-weight:700;font-size:14px}
+.qc[aria-pressed="true"]{background:var(--accent);color:var(--accent-ink);border-color:transparent}
+.big-in{font-family:var(--font-display);font-size:30px;text-align:center;padding:12px}
+.prev{display:flex;justify-content:space-between;gap:10px;font-size:14px;color:var(--muted)}
+.prev b{color:var(--fg)}
+textarea.input{min-height:150px;resize:vertical;direction:rtl}
+.toast{position:fixed;bottom:max(20px,env(safe-area-inset-bottom,0px));left:50%;transform:translateX(-50%);z-index:80;background:var(--fg);color:var(--bg);
+  padding:10px 18px;border-radius:99px;font-weight:700;font-size:14px;box-shadow:0 8px 24px rgba(0,0,0,.4)}
+
+.btn-primary.btn-danger{background:var(--lose);color:#2a0805}
+.col{display:grid;gap:22px;align-content:start;min-width:0}
+.setup-grid,.game-grid,.res-grid{display:grid;gap:22px;min-width:0}
+.start-row{display:grid;gap:10px;width:100%;max-width:520px;margin-inline:auto}
+.hero-text{display:grid;gap:12px;min-width:0}
+.hist-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:12px}
+.hist{display:grid;gap:12px;align-content:space-between}
+.hist-main{background:none;border:0;padding:0;text-align:start;display:grid;gap:8px;color:inherit;width:100%;min-width:0}
+.hist-t{display:grid}
+.hist-t b{font-family:var(--font-display);font-weight:400;font-size:20px}
+.hist-m{display:grid;gap:2px}
+select.input{appearance:none;background-image:linear-gradient(45deg,transparent 50%,var(--muted) 50%),linear-gradient(135deg,var(--muted) 50%,transparent 50%);background-position:calc(0% + 18px) 50%,calc(0% + 13px) 50%;background-size:5px 5px;background-repeat:no-repeat;padding-inline-start:34px}
+@media (min-width:960px){
+  .hero{grid-template-columns:1.15fr 1fr;grid-template-areas:"text art" "cta art";align-items:center;column-gap:48px;padding-top:28px}
+  .hero-art{grid-area:art;justify-self:center;transform:scale(1.2);transform-origin:center}
+  .hero-text{grid-area:text}.hero-cta{grid-area:cta}
+  .steps{grid-template-columns:repeat(3,1fr);gap:20px}
+  .setup-grid{grid-template-columns:1fr 1fr;align-items:start}
+  .game-grid{grid-template-columns:minmax(400px,.95fr) 1.05fr;align-items:start;gap:32px}
+  .game-grid .sticky{position:sticky;top:calc(env(safe-area-inset-top,0px) + 76px)}
+  .res-grid{grid-template-columns:minmax(340px,.9fr) 1.1fr;align-items:start;gap:32px}
+  .tiles{gap:16px}
+}
+.qc.fold{text-decoration:line-through;opacity:.55}
+.seat.fold{opacity:.45}
+.hand h2{font-family:var(--font-display);font-weight:400;font-size:20px}
+.hstats{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.hstats>div{background:var(--surface-hi);border:1px solid var(--line);border-radius:10px;padding:10px 12px;display:grid}
+.hstats b{font-family:var(--font-display);font-weight:400;font-size:26px}
+.hbtns{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.hbtns .btn{display:grid;gap:0;justify-items:center;padding:14px 8px}
+.hbtns .btn small{color:inherit;opacity:.75;font-weight:500}
+.bj-row{display:flex;flex-wrap:wrap;align-items:center;gap:10px;padding:10px 12px;background:var(--surface-hi);border:1px solid var(--line);border-radius:10px}
+.bj-row .who{flex:1 1 120px}
+.betctl{display:flex;gap:6px;align-items:center}
+.betctl .input{width:84px;text-align:center;padding:8px}
+.bj-p{display:grid;gap:8px;padding:12px;background:var(--surface-hi);border:1px solid var(--line);border-radius:10px}
+.hand-line{display:grid;gap:8px;padding-top:8px;border-top:1px dashed var(--line)}
+.hand-line:first-of-type{border-top:0;padding-top:0}
+.hl-h{display:flex;justify-content:space-between;gap:8px;align-items:baseline}
+@media (prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important}}
+@media (max-width:380px){.tiles{grid-template-columns:1fr}.two{grid-template-columns:1fr}.fr{grid-template-columns:1fr}}
+</style>
+
+<div id="root" dir="rtl" lang="he">
+  <div id="app"></div>
+  <div id="modal" hidden></div>
+  <div id="toast" class="toast" hidden></div>
+</div>
+
+<script>
+(function(){
+'use strict';
+var KEY='boysnight.v1';
+var TYPES={poker:'פוקר',blackjack:'בלאק ג׳ק',other:'אחר'};
+var ROLES={player:'שחקן',dealer:'דילר',spectator:'צופה'};
+var $=function(s){return document.querySelector(s)};
+
+/* ---------- state ---------- */
+function fresh(){return{screen:'welcome',setup:{type:'poker',role:'player',count:6,names:[],myName:'',title:'',bank:false,dealerMode:'player',dealerIdx:0,dealerName:'',
+  limitOn:true,min:50,max:200,first:100,budgetOn:true,budget:400},game:null,finalIn:{},paid:{},view:'debtor',history:[],hid:null}}
+function load(){
+  try{var r=localStorage.getItem(KEY);if(!r)return null;var o=JSON.parse(r);
+    if(!o||!o.setup)return null;
+    o.setup=Object.assign(fresh().setup,o.setup);o.history=o.history||[];
+    if(['game','finish','result'].indexOf(o.screen)>-1&&!o.game)o.screen='welcome';
+    if(o.screen==='setup'||o.screen==='hview')o.screen='welcome';
+    return o}catch(e){return null}
+}
+function save(){try{localStorage.setItem(KEY,JSON.stringify(S))}catch(e){}}
+var S=load()||fresh();
+var M=null; /* open dialog */
+
+/* ---------- helpers ---------- */
+function esc(s){return String(s).replace(/[&<>"']/g,function(c){return{'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]})}
+function num(v){var x=parseFloat(String(v).replace(',','.'));return isNaN(x)?NaN:x}
+function r2(x){return Math.round(x*100)/100}
+function toC(x){return Math.round(x*100)}
+function fmt(v){var a=Math.abs(v);return a.toLocaleString('he-IL',{minimumFractionDigits:Number.isInteger(r2(a))?0:2,maximumFractionDigits:2})}
+function txt(v,sign){return(v<0?'−':(sign&&v>0?'+':''))+'₪'+fmt(v)}
+function money(v){return'<span class="num">'+txt(v)+'</span>'}
+function mc(v){return'<span class="num '+(v>0?'win':v<0?'lose':'')+'">'+txt(v,true)+'</span>'}
+function uid(){return Math.random().toString(36).slice(2,9)}
+function hue(str){var h=0;for(var i=0;i<str.length;i++)h=(h*31+str.charCodeAt(i))%360;return h}
+function avStyle(key){return'background:hsl('+hue(String(key))+' 42% 36%)'}
+function initial(n){return(String(n).trim()[0]||'?')}
+function buyTotal(p){return r2(p.buys.reduce(function(a,b){return a+b},0))}
+function pl(id){return S.game.players.filter(function(p){return p.id===id})[0]}
+function nameOf(id){var p=pl(id);return p?p.name:'?'}
+function pot(){return r2(S.game.players.filter(function(p){return!p.bank}).reduce(function(a,p){return a+buyTotal(p)},0))}
+function gameName(g){return g.type==='other'?(g.title||'ערב בנים'):TYPES[g.type]}
+function setStage(st){if(S.game)S.game.stage=st}
+function toast(m){var t=$('#toast');t.textContent=m;t.hidden=false;clearTimeout(toast.t);toast.t=setTimeout(function(){t.hidden=true},2200)}
+function go(screen){S.screen=screen;if(S.game&&['game','finish','result'].indexOf(screen)>-1)S.game.stage=screen;render();try{window.scrollTo(0,0)}catch(e){}}
+
+/* ---------- dealer helpers ---------- */
+function dealerOf(){var g=S.game;return g&&g.dealer?g.dealer:{mode:'none'}}
+function isDealer(p){var d=dealerOf();return d.mode==='player'&&d.pid===p.id}
+function isDealerId(id){var p=S.game&&pl(id);return!!p&&isDealer(p)}
+function lbl(p){return esc(p.name)+(isDealer(p)?' (דילר)':'')}
+function dealerPlain(){var d=dealerOf();if(d.mode==='external')return d.name||'דילר';if(d.mode==='player'){var p=pl(d.pid);return p?p.name:''}return''}
+function dealerText(){var d=dealerOf();if(d.mode==='none')return'אין דילר';if(d.mode==='external')return esc(d.name||'דילר')+' (דילר)';var p=pl(d.pid);return p?lbl(p):'אין דילר'}
+function dealerOpts(s){var o='';for(var i=0;i<s.count;i++){var n=(s.names[i]||'').trim()||(i===0&&s.role==='player'?'אני':'שחקן '+(i+1));o+='<option value="'+i+'"'+(Number(s.dealerIdx)===i?' selected':'')+'>'+esc(n)+'</option>'}return o}
+function updDealerSel(){var el=$('#dealerIdx');if(el)el.innerHTML=dealerOpts(S.setup)}
+
+/* ---------- stacks / hand ---------- */
+function stackOf(p){return r2(buyTotal(p)+(p.adj||0))}
+function showStack(){var g=S.game;return!!g&&(g.hands>0||!!g.hand)}
+function foldedNow(p){var h=S.game&&S.game.hand;return!!(h&&h.f&&h.f[p.id])}
+function hCall(){
+  var g=S.game,h=g.hand,capped=[];
+  g.players.forEach(function(p){
+    if(p.bank||p.released||h.f[p.id])return;
+    var have=h.c[p.id]||0,need=r2(h.bet-have);if(need<=0)return;
+    var pay=Math.min(need,Math.max(0,stackOf(p)));
+    if(pay<need)capped.push(p.name);
+    if(pay>0){h.c[p.id]=r2(have+pay);p.adj=r2((p.adj||0)-pay);h.pot=r2(h.pot+pay)}
+  });
+  return capped;
+}
+function hCancel(){
+  var g=S.game,h=g.hand;if(!h)return;
+  Object.keys(h.c||{}).forEach(function(id){var p=pl(id);if(p)p.adj=r2((p.adj||0)+h.c[id])});
+  g.hand=null;
+}
+var MODES={nl:'נו לימיט',pl:'פוט לימיט',cap:'מקסימום קבוע'};
+function raiseLimits(){
+  var g=S.game,h=g.hand;
+  var ins=g.players.filter(function(p){return!p.bank&&!p.released&&!(h.f&&h.f[p.id])});
+  var minBy=h.last||h.blind||1;
+  var top=Math.max.apply(null,ins.map(function(p){return(h.c[p.id]||0)+Math.max(0,stackOf(p))}).concat([0]));
+  var capBy=r2(top-h.bet),maxBy;
+  if(h.mode==='pl'){var needs=ins.reduce(function(a,p){return a+Math.max(0,r2(h.bet-(h.c[p.id]||0)))},0);maxBy=r2(h.pot+needs)}
+  else if(h.mode==='cap')maxBy=h.cap;else maxBy=capBy;
+  maxBy=Math.max(0,Math.min(maxBy,capBy));
+  return{min:minBy,max:maxBy};
+}
+function pokerSeats(){
+  var g=S.game,act=g.players.filter(function(p){return!p.bank&&!p.released&&stackOf(p)>0}),n=act.length;
+  if(n<2)return null;
+  var d=dealerOf(),di=0;
+  if(d.mode==='player'){var k=-1;act.forEach(function(p,i){if(p.id===d.pid)k=i});if(k>-1)di=k}
+  if(n===2)return{sb:act[di],bb:act[(di+1)%2]};
+  return{sb:act[(di+1)%n],bb:act[(di+2)%n]};
+}
+function rotateDealer(){
+  var g=S.game,d=dealerOf();if(d.mode!=='player')return;
+  var act=g.players.filter(function(p){return!p.bank&&!p.released}),k=-1;
+  act.forEach(function(p,i){if(p.id===d.pid)k=i});
+  if(k>-1&&act.length>1)g.dealer={mode:'player',pid:act[(k+1)%act.length].id};
+}
+function houseP(){var d=dealerOf();if(d.mode!=='player')return null;return pl(d.pid)||null}
+function bjPlayers(){var hp=houseP();return S.game.players.filter(function(p){return!p.bank&&!p.released&&(!hp||p.id!==hp.id)})}
+function handDelta(x,pay){
+  var b=num(x.bet)||0,m=x.dbl?2:1;
+  if(x.res==='w')return r2(b*m);if(x.res==='l')return-r2(b*m);if(x.res==='bj')return r2(b*pay);if(x.res==='sur')return-r2(b/2);return 0;
+}
+function payLabel(p){return p===1.5?'3:2':p===1.2?'6:5':p+':1'}
+function handInfo(){
+  var g=S.game,h=g.hand;if(!h)return null;
+  if(g.type==='blackjack'){var s=0;Object.keys(h.p||{}).forEach(function(id){var e=h.p[id];if(!e.out)e.hands.forEach(function(x){s+=(num(x.bet)||0)*(x.dbl?2:1)})});return{label:'הימורים בסיבוב',val:r2(s)}}
+  return{label:'קופת היד',val:h.pot};
+}
+function pokerPanel(g){
+  var h=g.hand,done='<small>'+(g.hands||0)+' ידיים הסתיימו</small>';
+  if(!h)return'<section class="panel hand"><div class="list-h"><h2>הימורים</h2>'+done+'</div><p class="hint">התחל יד: קובעים בליינדים ומגבלת העלאה, והבליינדים נגבים אוטומטית מהשחקנים שאחרי הדילר. Raise ו-Call פועלים על כל השולחן.</p><button class="btn btn-primary" data-act="hstart">התחל יד</button></section>';
+  var lim=raiseLimits();
+  var chips=g.players.filter(function(p){return!p.bank&&!p.released}).map(function(p){
+    var out=!!h.f[p.id],tg=h.sb===p.id?' · SB':(h.bb===p.id?' · BB':'');
+    return'<button class="qc'+(out?' fold':'')+'" data-act="hfold" data-id="'+p.id+'" aria-pressed="'+(!out)+'">'+esc(p.name)+tg+' · '+money(h.c[p.id]||0)+'</button>';
+  }).join('');
+  var pend=g.players.filter(function(p){return!p.bank&&!p.released&&!h.f[p.id]&&r2(h.bet-(h.c[p.id]||0))>0&&stackOf(p)>0}).length;
+  return'<section class="panel hand"><div class="list-h"><h2>היד הנוכחית</h2><button class="btn btn-ghost btn-sm" data-act="hcancel">בטל יד</button></div>'+
+    '<div class="hstats"><div><small>קופת היד</small><b>'+money(h.pot)+'</b></div><div><small>הימור נוכחי לכל אחד</small><b>'+money(h.bet)+'</b></div></div>'+
+    '<p class="hint">'+(MODES[h.mode]||'')+' · SB '+money(h.sbA||0)+' · BB '+money(h.bbA||0)+'<br>Raise: מינימום '+money(lim.min)+' · מקסימום '+money(lim.max)+'</p>'+
+    (pend?'<p class="hint" style="color:var(--accent)">'+pend+' שחקנים עוד לא השוו להימור. לחץ Call כדי שהכסף ייכנס לקופה.</p>':'')+
+    '<div class="hbtns"><button class="btn btn-lg" data-act="hraise">Raise<small>העלאה</small></button><button class="btn btn-primary btn-lg" data-act="hcall">Call<small>כולם משווים</small></button></div>'+
+    '<div style="display:grid;gap:8px"><small>מי עדיין ביד (לחיצה על שם = Fold)</small><div class="qchips">'+chips+'</div></div>'+
+    '<button class="btn btn-block" data-act="hend">סיים יד וחלק קופה</button></section>';
+}
+function bjPanel(g){
+  var h=g.hand,done='<small>'+(g.hands||0)+' סיבובים הסתיימו</small>';
+  if(!houseP())return'<section class="panel hand"><div class="list-h"><h2>סיבוב בלאק ג׳ק</h2></div><p class="hint">כדי לשחק סיבובים הדילר צריך להיות שחקן או הבנק, כי הוא משלם ומקבל מול השחקנים. כרגע הדילר חיצוני או שאין דילר.</p><button class="btn" data-act="dealer">בחר דילר</button></section>';
+  if(!h)return'<section class="panel hand"><div class="list-h"><h2>סיבוב בלאק ג׳ק</h2>'+done+'</div><p class="hint">התחל סיבוב: קובעים מינימום ומקסימום להימור ותשלום בלאק ג׳ק. אחרי החלוקה מסמנים תוצאה לכל יד: ניצח, תיקו, הפסיד, בלאק ג׳ק, דאבל, פיצול או ויתור.</p><button class="btn btn-primary" data-act="hstart">התחל סיבוב</button></section>';
+  var info='<p class="hint">הימור: מינימום '+money(h.min)+' · מקסימום '+money(h.max)+' · בלאק ג׳ק משלם '+payLabel(h.pay)+'</p>';
+  var head='<div class="list-h"><h2>הסיבוב הנוכחי</h2><button class="btn btn-ghost btn-sm" data-act="hcancel">בטל סיבוב</button></div>';
+  var pls=bjPlayers();
+  if(h.phase==='bet'){
+    return'<section class="panel hand">'+head+info+pls.map(function(p){
+      var e=h.p[p.id];if(!e)return'';
+      return'<div class="bj-row"><div class="who"><b>'+lbl(p)+'</b><small>על השולחן '+money(stackOf(p))+'</small></div>'+
+        (e.out?'<span class="muted">מדלג</span>':'<div class="betctl"><button class="btn btn-sm" data-act="bstep" data-id="'+p.id+'" data-d="-1" aria-label="פחות">−</button><input class="input" id="bet-'+p.id+'" data-bet="'+p.id+'" type="number" inputmode="decimal" value="'+esc(e.hands[0].bet)+'" aria-label="הימור"><button class="btn btn-sm" data-act="bstep" data-id="'+p.id+'" data-d="1" aria-label="יותר">+</button></div>')+
+        '<button class="qc" data-act="bout" data-id="'+p.id+'" aria-pressed="'+e.out+'">'+(e.out?'חזור':'דלג')+'</button></div>';
+    }).join('')+'<button class="btn btn-primary btn-block" data-act="bdeal">חלק קלפים</button></section>';
+  }
+  var total=0;
+  var rows=pls.map(function(p){
+    var e=h.p[p.id];if(!e||e.out)return'';
+    var lines=e.hands.map(function(x,i){
+      var canBJ=e.hands.length===1&&!x.dbl;
+      var rb=function(v,l){return'<button class="qc" data-act="bres" data-id="'+p.id+'" data-i="'+i+'" data-v="'+v+'" aria-pressed="'+(x.res===v)+'">'+l+'</button>'};
+      if(x.res)total+=handDelta(x,h.pay);
+      return'<div class="hand-line"><div class="hl-h"><b>'+(e.hands.length>1?'יד '+(i+1)+' · ':'')+'הימור '+money(r2((num(x.bet)||0)*(x.dbl?2:1)))+(x.dbl?' (דאבל)':'')+'</b><span>'+(x.res?mc(handDelta(x,h.pay)):'')+'</span></div>'+
+        '<div class="qchips">'+rb('l','הפסיד')+rb('p','תיקו')+rb('w','ניצח')+(canBJ?rb('bj','בלאק ג׳ק')+rb('sur','ויתר'):'')+'</div>'+
+        '<div class="qchips"><button class="qc" data-act="bdbl" data-id="'+p.id+'" data-i="'+i+'" aria-pressed="'+!!x.dbl+'">דאבל</button></div></div>';
+    }).join('');
+    return'<div class="bj-p"><div class="list-h"><b>'+lbl(p)+'</b><small>על השולחן '+money(stackOf(p))+'</small></div>'+lines+'<div class="qchips"><button class="qc" data-act="bsplit" data-id="'+p.id+'">+ פצל</button></div></div>';
+  }).join('');
+  return'<section class="panel hand">'+head+info+rows+'<div class="prev"><span>מאזן הדילר בסיבוב</span><b>'+mc(-r2(total))+'</b></div><button class="btn btn-primary btn-block" data-act="bend">סיים סיבוב</button></section>';
+}
+function handHTML(){
+  var g=S.game;
+  if(g.type==='poker')return pokerPanel(g);
+  if(g.type==='blackjack')return bjPanel(g);
+  return'';
+}
+
+/* ---------- settlement ---------- */
+function settle(rows){
+  var d=[],c=[],t=[];
+  rows.forEach(function(r){if(r.net<0)d.push({id:r.id,v:-r.net});else if(r.net>0)c.push({id:r.id,v:r.net})});
+  /* exact matches first */
+  for(var i=d.length-1;i>=0;i--){for(var j=c.length-1;j>=0;j--){
+    if(d[i]&&c[j]&&d[i].v===c[j].v){t.push({from:d[i].id,to:c[j].id,amt:d[i].v});d.splice(i,1);c.splice(j,1);break}}}
+  d.sort(function(a,b){return b.v-a.v});c.sort(function(a,b){return b.v-a.v});
+  var x=0,y=0;
+  while(x<d.length&&y<c.length){
+    var m=Math.min(d[x].v,c[y].v);
+    t.push({from:d[x].id,to:c[y].id,amt:m});d[x].v-=m;c[y].v-=m;
+    if(d[x].v===0)x++;if(c[y].v===0)y++;
+  }
+  return t;
+}
+function compute(){
+  var g=S.game,rows=[],potC=0,bank=null;
+  g.players.forEach(function(p){
+    if(p.bank){bank=p;return}
+    var b=toC(buyTotal(p));potC+=b;
+    var out=p.released?p.out:num(S.finalIn[p.id]);
+    rows.push({id:p.id,name:p.name,net:toC(out)-b});
+  });
+  if(bank){rows.unshift({id:bank.id,name:bank.name,net:-rows.reduce(function(a,r){return a+r.net},0)})}
+  return{rows:rows,transfers:settle(rows),potC:potC};
+}
+
+/* ---------- views ---------- */
+function histCard(h){
+  var best=null;h.rows.forEach(function(r){if(r.net>0&&(!best||r.net>best.net))best=r});
+  return '<article class="card hist"><button class="hist-main" data-act="hopen" data-id="'+h.id+'"><span class="hist-t"><b>'+esc(h.title)+'</b><small>'+new Date(h.ts).toLocaleDateString('he-IL')+'</small></span>'+
+    '<span class="hist-m"><small>קופה '+money(h.potC/100)+' · '+h.rows.length+' משתתפים</small>'+
+    (best?'<small>הרוויח הכי הרבה: '+esc(best.name)+' '+mc(best.net/100)+'</small>':'<small>הערב נסגר על אפס</small>')+'</span></button>'+
+    '<div class="row-btns"><button class="btn btn-sm" data-act="hopen" data-id="'+h.id+'">פתח</button><button class="btn btn-ghost btn-sm btn-danger" data-act="hdel" data-id="'+h.id+'">מחק</button></div></article>';
+}
+function vWelcome(){
+  var g=S.game,resume='',hist='';
+  if(g){
+    var stage={game:'במשחק',finish:'בסיום הערב',result:'סיכום מוכן'}[g.stage||'game'];
+    resume='<section class="card resume"><div class="resume-top"><div><small>ערב פתוח</small><br><b>'+esc(gameName(g))+'</b></div><small>'+
+      g.players.filter(function(p){return!p.bank}).length+' שחקנים · קופה '+money(pot())+' · '+stage+'</small></div>'+
+      '<div class="row-btns"><button class="btn btn-primary" data-act="resume">המשך ערב</button><button class="btn btn-ghost btn-danger" data-act="discard">מחק</button></div></section>';
+  }
+  if(S.history.length){
+    hist='<section style="display:grid;gap:12px"><h2 class="sec">היסטוריית ערבים</h2><div class="hist-grid">'+S.history.map(histCard).join('')+'</div></section>';
+  }
+  return '<div class="wrap">'+
+  '<div class="hero"><div class="hero-art" aria-hidden="true">'+
+    '<div class="pcard c1"><span>A</span><i>♠&#xFE0E;</i></div><div class="pcard c2 red"><span>K</span><i>♥&#xFE0E;</i></div><div class="pcard c3 red"><span>10</span><i>♦&#xFE0E;</i></div>'+
+    '<div class="chips"><div class="chip" style="--c:#c0392b"></div><div class="chip" style="--c:#1f6feb"></div><div class="chip" style="--c:#1c1c1c"></div></div></div>'+
+  '<div class="hero-text"><div class="eyebrow">BOYS NIGHT</div><h1 class="logo">ערב בנים</h1>'+
+  '<p class="lead">רושמים קניות ושחרורים במהלך הערב. בסוף מקבלים מי חייב כמה למי, בלי מחשבון ובלי ויכוחים.</p></div>'+
+  '<div class="hero-cta"><button class="btn btn-primary btn-lg" data-act="new">ערב חדש</button></div></div>'+
+  resume+
+  '<section style="display:grid;gap:12px"><h2 class="sec">איזה משחק הערב?</h2><div class="tiles">'+
+    '<button class="tile" data-act="pick" data-v="poker"><div class="gl"><div class="chip mini" style="--c:#c0392b"></div></div><b>פוקר</b><small>שולחן ירוק ומושבים</small></button>'+
+    '<button class="tile" data-act="pick" data-v="blackjack"><div class="gl">21</div><b>בלאק ג׳ק</b><small>דילר מול השחקנים</small></button>'+
+    '<button class="tile" data-act="pick" data-v="other"><div class="gl">⚃&#xFE0E;</div><b>אחר</b><small>כל משחק אחר</small></button>'+
+  '</div></section>'+
+  hist+
+  '<section style="display:grid;gap:14px"><h2 class="sec">איך זה עובד</h2><ol class="steps">'+
+    '<li><div><b>מגדירים ערב</b><span class="muted">משחק, תפקיד שלך, דילר, כמה שחקנים, פתיחה מינימום ומקסימום ותקציב לכל אחד.</span></div></li>'+
+    '<li><div><b>מנהלים את השולחן</b><span class="muted">קנייה נוספת, הרחבת תקציב, והוספה או שחרור של שחקן עם הרווח או ההפסד שלו.</span></div></li>'+
+    '<li><div><b>סוגרים חשבון</b><span class="muted">מזינים כמה כל אחד יצא איתו ומקבלים רשימה ברורה של מי חייב למי. הערב נשמר בהיסטוריה.</span></div></li>'+
+  '</ol></section></div>';
+}
+
+function roleNote(s){
+  if(s.role==='player')return 'אתה אחד השחקנים ונכלל בחשבון.';
+  if(s.role==='spectator')return 'אתה צופה ולא נכלל בחשבון.';
+  return s.bank?'אתה הדילר והבנק. אתה משחק מול כל השחקנים והחשבון שלך מחושב אוטומטית.':'אתה הדילר ורק מחלק. לא נכלל בחשבון הכסף.';
+}
+function sw(k,on,label,sub){
+  return '<div class="swrow"><div><b>'+label+'</b>'+(sub?'<small>'+sub+'</small>':'')+'</div><button class="sw" role="switch" aria-checked="'+on+'" aria-label="'+label+'" data-act="tg" data-k="'+k+'"></button></div>';
+}
+function vSetup(){
+  var s=S.setup,names='';
+  for(var i=0;i<s.count;i++){
+    names+='<label class="nm"><span class="av sm" style="'+avStyle(i+1)+'">'+(i+1)+'</span><input class="input" id="nm'+i+'" data-name="'+i+'" value="'+esc(s.names[i]||'')+'" placeholder="'+(i===0&&s.role==='player'?'השם שלך':'שחקן '+(i+1))+'" autocomplete="off" enterkeyhint="next"></label>';
+  }
+  var typeBtn=function(v,gl,label){return '<button class="opt" data-act="type" data-v="'+v+'" aria-pressed="'+(s.type===v)+'"><div class="gl">'+gl+'</div>'+label+'</button>'};
+  var roleBtn=function(v){return '<button data-act="role" data-v="'+v+'" aria-pressed="'+(s.role===v)+'">'+ROLES[v]+'</button>'};
+  var dm=function(v,l){return '<button data-act="dmode" data-v="'+v+'" aria-pressed="'+(s.dealerMode===v)+'">'+l+'</button>'};
+  var dealerPanel='';
+  if(s.role!=='dealer'){
+    dealerPanel='<section class="panel"><h2>מי הדילר?</h2><div class="seg">'+dm('player','אחד השחקנים')+dm('external','דילר חיצוני')+dm('none','אין דילר')+'</div>'+
+      (s.dealerMode==='player'?'<label class="field"><span>הדילר</span><select class="input" id="dealerIdx" data-field="dealerIdx">'+dealerOpts(s)+'</select></label>':'')+
+      (s.dealerMode==='external'?'<label class="field"><span>שם הדילר</span><input class="input" id="dealerName" data-field="dealerName" value="'+esc(s.dealerName)+'" placeholder="דילר" autocomplete="off"></label>':'')+
+      '<p class="hint">'+(s.dealerMode==='none'?'סמן אין דילר רק אם באמת אין. הדילר מסומן ליד השם, ואפשר להחליף אותו במהלך הערב.':s.dealerMode==='external'?'דילר חיצוני רק מחלק ולא נכלל בחשבון הכסף.':'הדילר מסומן ליד שמו ונכלל בחשבון כמו כל שחקן.')+'</p></section>';
+  }
+  var left='<div class="col"><section class="panel"><h2>איזה משחק?</h2><div class="opts">'+
+    typeBtn('poker','<div class="chip mini" style="--c:#c0392b"></div>','פוקר')+typeBtn('blackjack','21','בלאק ג׳ק')+typeBtn('other','⚃&#xFE0E;','אחר')+'</div>'+
+    (s.type==='other'?'<label class="field"><span>שם המשחק (לא חובה)</span><input class="input" id="title" data-field="title" value="'+esc(s.title)+'" placeholder="למשל: קונקן, שש בש, רמי"></label>':'')+
+  '</section>'+
+  '<section class="panel"><h2>מה התפקיד שלך?</h2><div class="seg">'+roleBtn('player')+roleBtn('dealer')+roleBtn('spectator')+'</div>'+
+    '<p class="hint">'+roleNote(s)+'</p>'+
+    (s.role==='dealer'?'<label class="field"><span>השם שלך</span><input class="input" id="myName" data-field="myName" value="'+esc(s.myName)+'" placeholder="'+(s.bank?'הבנק':'אני')+'"></label>'+
+      sw('bank',s.bank,'הדילר הוא גם הבנק','משחק מול השחקנים ומרוויח או מפסיד מולם'):'')+
+  '</section>'+dealerPanel+'</div>';
+  var right='<div class="col"><section class="panel"><h2>כמה שחקנים?</h2><div class="stepper"><button data-act="count" data-d="-1" aria-label="פחות שחקנים">−</button><output>'+s.count+'</output><button data-act="count" data-d="1" aria-label="עוד שחקן">+</button></div>'+
+    '<div class="names">'+names+'</div></section>'+
+  '<section class="panel"><h2>פתיחה ותקציב</h2>'+
+    sw('limitOn',s.limitOn,'הגבלת פתיחה','מינימום ומקסימום לכל קנייה')+
+    (s.limitOn?'<div class="two"><label class="field"><span>מינימום</span><input class="input" id="min" data-field="min" type="number" inputmode="decimal" min="0" value="'+esc(s.min)+'"></label><label class="field"><span>מקסימום</span><input class="input" id="max" data-field="max" type="number" inputmode="decimal" min="0" value="'+esc(s.max)+'"></label></div>':'')+
+    '<label class="field"><span>קנייה ראשונה לכל שחקן (₪)</span><input class="input" id="first" data-field="first" type="number" inputmode="decimal" min="0" value="'+esc(s.first)+'"></label>'+
+    sw('budgetOn',s.budgetOn,'תקציב לכל שחקן','סכום קניות מקסימלי שאי אפשר לעבור, אלא אם מרחיבים')+
+    (s.budgetOn?'<label class="field"><span>תקציב (₪)</span><input class="input" id="budget" data-field="budget" type="number" inputmode="decimal" min="0" value="'+esc(s.budget)+'"></label>':'')+
+  '</section></div>';
+  return '<div class="wrap">'+
+  '<div class="top-simple"><button class="btn btn-ghost btn-sm" data-act="home">‹ חזרה</button><b class="sec">ערב חדש</b><span style="width:70px"></span></div>'+
+  '<div class="setup-grid">'+left+right+'</div>'+
+  '<div class="start-row"><p class="err" id="serr" role="alert"></p><button class="btn btn-primary btn-lg btn-block" data-act="start">התחל ערב</button></div></div>';
+}
+
+function seatHTML(p,x,y,flat){
+  var net=p.released?r2(p.out-buyTotal(p)):null;
+  var amt=p.bank?'<span class="num">בנק</span>':(p.released?mc(net):money(showStack()?stackOf(p):buyTotal(p)));
+  return '<div class="seat'+(p.released?' out':'')+(p.bank?' bank':'')+(foldedNow(p)?' fold':'')+'"'+(flat?'':' style="left:'+x.toFixed(1)+'%;top:'+y.toFixed(1)+'%"')+'>'+
+    '<div class="av" style="'+avStyle(p.name)+'">'+esc(initial(p.name))+'</div><div class="sn">'+esc(p.name)+'</div>'+(isDealer(p)?'<div class="sd">(דילר)</div>':'')+'<div class="sa">'+amt+'</div></div>';
+}
+function tableHTML(){
+  var g=S.game,ps=g.players.filter(function(p){return!p.bank}),bank=g.players.filter(function(p){return p.bank})[0],n=ps.length;
+  var d=dealerOf();
+  var center=(handInfo()?'<div class="pot"><small>'+handInfo().label+'</small><b>'+money(handInfo().val)+'</b></div><div class="dlr">סה״כ בשולחן '+money(pot())+'</div>':'<div class="pot"><small>קופה</small><b>'+money(pot())+'</b></div>')+'<div class="dlr">'+(d.mode==='none'?'ללא דילר':'דילר: '+esc(dealerPlain()))+'</div>';
+  if(g.type==='other'){
+    return '<div class="table-flat"><div class="seats-flat">'+g.players.map(function(p){return seatHTML(p,0,0,true)}).join('')+'</div><p class="hint" style="text-align:center">'+(d.mode==='none'?'ללא דילר':'דילר: '+esc(dealerPlain()))+'</p></div>';
+  }
+  var seats='';
+  if(g.type==='poker'){
+    ps.forEach(function(p,i){var a=Math.PI/2+2*Math.PI*i/n;seats+=seatHTML(p,50+41*Math.cos(a),50+36*Math.sin(a))});
+  }else{
+    if(bank)seats+=seatHTML(bank,50,13);
+    ps.forEach(function(p,i){var deg=n===1?90:20+140*i/(n-1),a=deg*Math.PI/180;seats+=seatHTML(p,50+42*Math.cos(a),32+54*Math.sin(a))});
+  }
+  return '<div class="table t-'+g.type+'"><div class="felt">'+center+'</div>'+seats+'</div>';
+}
+
+function playerCard(p){
+  var tag=p.tag==='me'?'<span class="tag">אני</span>':'';
+  if(p.bank){
+    return '<article class="pl"><div class="pl-head"><div class="av" style="background:var(--accent);color:var(--accent-ink)">'+esc(initial(p.name))+'</div><div class="who"><b>'+lbl(p)+tag+'</b><small>הבנק</small></div><div class="fig"><small>רווח / הפסד</small><b style="font-size:16px">מחושב בסיום</b></div></div></article>';
+  }
+  var bt=buyTotal(p);
+  if(p.released){
+    var net=r2(p.out-bt);
+    return '<article class="pl out"><div class="pl-head"><div class="av" style="'+avStyle(p.name)+';filter:grayscale(.6)">'+esc(initial(p.name))+'</div>'+
+      '<div class="who"><b>'+lbl(p)+tag+'</b><small>שוחרר · קנה '+money(bt)+' · יצא עם '+money(p.out)+'</small></div>'+
+      '<div class="fig"><small>'+(net>=0?'רווח':'הפסד')+'</small><b>'+mc(net)+'</b></div></div>'+
+      '<div class="acts"><button class="btn btn-ghost btn-sm" data-act="unrelease" data-id="'+p.id+'">החזר למשחק</button></div></article>';
+  }
+  var meter='',meta='';
+  if(p.budget!=null){
+    var rem=r2(p.budget-bt),pct=Math.min(100,Math.max(0,bt/p.budget*100));
+    meter='<div class="meter'+(rem<=0?' full':'')+'"><i style="width:'+pct+'%"></i></div>';
+    meta='<span>תקציב '+money(p.budget)+'</span><span>'+(rem>0?'נשאר '+money(rem):'התקציב מוצה')+'</span>';
+  }else meta='<span>ללא תקציב</span>';
+  if(showStack())meta='<span>על השולחן '+money(stackOf(p))+'</span>'+meta;
+  var hist=p.buys.length>1?'<span>'+p.buys.map(function(b){return fmt(b)}).join(' + ')+'</span>':'';
+  return '<article class="pl"><div class="pl-head"><div class="av" style="'+avStyle(p.name)+'">'+esc(initial(p.name))+'</div>'+
+    '<div class="who"><b>'+lbl(p)+tag+'</b><small>'+(p.buys.length===1?'קנייה אחת':p.buys.length+' קניות')+'</small></div>'+
+    '<div class="fig"><small>קנה סה״כ</small><b>'+money(bt)+'</b></div></div>'+meter+
+    '<div class="meta">'+meta+hist+'</div>'+
+    '<div class="acts"><button class="btn btn-sm" data-act="buy" data-id="'+p.id+'">+ קנייה</button>'+
+    '<button class="btn btn-sm" data-act="extend" data-id="'+p.id+'">'+(p.budget==null?'הגדר תקציב':'הרחב תקציב')+'</button>'+
+    '<button class="btn btn-sm" data-act="release" data-id="'+p.id+'">שחרר</button>'+
+    (p.buys.length>1?'<button class="btn btn-ghost btn-sm" data-act="undo" data-id="'+p.id+'">בטל קנייה אחרונה</button>':'')+'</div></article>';
+}
+function vGame(){
+  var g=S.game,real=g.players.filter(function(p){return!p.bank}),act=real.filter(function(p){return!p.released}).length;
+  var hasBank=g.players.some(function(p){return p.bank}),hi=handInfo();
+  var dtile=hasBank?'<div><small>דילר</small><b style="font-size:17px">'+dealerText()+'</b></div>':'<button data-act="dealer"><small>דילר · החלף</small><b style="font-size:17px">'+dealerText()+'</b></button>';
+  return '<div class="wrap">'+
+  '<header class="top"><button class="btn btn-ghost btn-sm" data-act="home">‹ בית</button>'+
+    '<div class="ttl"><b>'+esc(gameName(g))+'</b><small>'+ROLES[g.role]+' · '+real.length+' שחקנים</small></div>'+
+    '<button class="btn btn-primary btn-sm" data-act="finish">סיום ערב</button></header>'+
+  '<div class="game-grid"><div class="col sticky">'+
+    '<section class="stats">'+(hi?'<div style="border-color:var(--accent)"><small>'+hi.label+'</small><b>'+money(hi.val)+'</b></div>':'')+'<div><small>'+(hi?'סה״כ בשולחן':'קופה')+'</small><b>'+money(pot())+'</b></div><div><small>עדיין במשחק</small><b>'+act+' / '+real.length+'</b></div>'+dtile+
+      (g.limitOn?'<div><small>פתיחה</small><b style="font-size:17px">'+money(g.min)+'–'+money(g.max)+'</b></div>':'')+'</section>'+
+    tableHTML()+handHTML()+'</div>'+
+  '<div class="col"><div class="list-h"><h2 class="sec">השחקנים</h2><button class="btn btn-sm" data-act="addp">+ הוסף שחקן</button></div>'+
+    '<div class="plist">'+g.players.map(playerCard).join('')+'</div>'+
+    '<div class="endbar"><button class="btn btn-primary btn-lg btn-block" data-act="finish">סיום ערב וחישוב חובות</button></div></div></div></div>';
+}
+
+/* finish */
+function finState(){
+  var g=S.game,real=g.players.filter(function(p){return!p.bank}),potV=pot(),counted=0,missing=[];
+  real.forEach(function(p){
+    if(p.released)counted+=p.out;
+    else{var v=num(S.finalIn[p.id]);if(isNaN(v)||S.finalIn[p.id]==='')missing.push(p);else counted+=v}
+  });
+  counted=r2(counted);
+  return{pot:potV,counted:counted,missing:missing,left:r2(potV-counted),bank:g.players.some(function(p){return p.bank})};
+}
+function finSummary(){
+  var f=finState(),out='';
+  out+='<div class="line"><span class="muted">סה״כ נכנס לקופה</span><b>'+money(f.pot)+'</b></div>';
+  out+='<div class="line"><span class="muted">סה״כ שחולק</span><b>'+money(f.counted)+'</b></div>';
+  var ok=false,msg='';
+  if(f.missing.length){
+    msg='<p class="hint">חסר סכום סיום ל'+f.missing.map(function(p){return lbl(p)}).join(', ')+'.</p>';
+    if(f.missing.length===1&&f.left>=0&&!f.bank){
+      out+=msg+'<button class="btn btn-sm" data-act="fill" data-id="'+f.missing[0].id+'">השלם ל'+esc(f.missing[0].name)+': '+txt(f.left)+'</button>';
+    }else out+=msg;
+  }else if(f.bank){ok=true;out+='<p class="hint">הבנק מכסה את ההפרש, והחשבון שלו יחושב אוטומטית.</p>'}
+  else if(f.left===0){ok=true;out+='<p class="hint win">הכול מתאזן. אפשר לחשב.</p>'}
+  else out+='<p class="err">'+(f.left>0?'נשארו '+txt(f.left)+' שלא חולקו':'חולקו '+txt(-f.left)+' יותר ממה שנכנס')+'. בדוק את הסכומים.</p>';
+  out+='<button class="btn btn-primary btn-block" data-act="calc" '+(ok?'':'disabled')+'>חשב מי חייב למי</button>';
+  return out;
+}
+function vFinish(){
+  var g=S.game,rows=g.players.filter(function(p){return!p.bank}).map(function(p){
+    var bt=buyTotal(p);
+    if(p.released){var net=r2(p.out-bt);
+      return '<div class="fr done"><div class="who"><b>'+lbl(p)+'</b><small>שוחרר · יצא עם '+money(p.out)+'</small></div><div class="fig" style="text-align:end"><b style="font-size:20px">'+mc(net)+'</b></div></div>'}
+    var v=S.finalIn[p.id]===undefined?'':S.finalIn[p.id],n=num(v);
+    return '<div class="fr"><div class="who"><b>'+lbl(p)+'</b><small>קנה '+money(bt)+' · <span id="fn-'+p.id+'">'+(isNaN(n)?'':mc(r2(n-bt)))+'</span></small></div>'+
+      '<label class="field"><span class="lbl" style="font-size:11px">יוצא עם (₪)</span><input class="input" id="fin-'+p.id+'" data-fin="'+p.id+'" type="number" inputmode="decimal" min="0" value="'+esc(v)+'" placeholder="0"></label></div>';
+  }).join('');
+  return '<div class="wrap w-narrow"><div class="top-simple"><button class="btn btn-ghost btn-sm" data-act="backgame">‹ חזרה למשחק</button><b class="sec">סיום ערב</b><span style="width:70px"></span></div>'+
+  '<p class="hint">'+(g.hands>0?'הסכומים מולאו לפי הערימות שנצברו בידיים. אפשר לתקן לפני החישוב. ':'הזן לכל שחקן עם כמה כסף הוא יוצא מהשולחן. ')+'מי ששוחרר כבר נספר.</p>'+
+  '<div class="frows">'+rows+'</div><div class="fsum" id="fsum">'+finSummary()+'</div></div>';
+}
+
+/* result */
+function lblOf(r){return esc(r.name)+(r.d?' (דילר)':'')}
+function snapOf(){
+  var g=S.game,R=compute();if(!g.id)g.id=uid();if(!g.ts)g.ts=Date.now();
+  return{id:g.id,ts:g.ts,type:g.type,title:gameName(g),potC:R.potC,transfers:R.transfers,paid:Object.assign({},S.paid),
+    rows:R.rows.map(function(r){return{id:r.id,name:r.name,net:r.net,d:isDealerId(r.id)}})};
+}
+function recordHistory(){
+  var s=snapOf(),i=-1;S.history.forEach(function(h,k){if(h.id===s.id)i=k});
+  if(i>-1)S.history[i]=s;else S.history.unshift(s);
+}
+function histById(id){return S.history.filter(function(h){return h.id===id})[0]}
+function textOf(o){
+  var by={};o.rows.forEach(function(r){by[r.id]=r});
+  var pn=function(id){var r=by[id];return r?r.name+(r.d?' (דילר)':''):'?'};
+  var L=['Boys Night · '+o.title+' · '+new Date(o.ts).toLocaleDateString('he-IL'),''];
+  o.rows.filter(function(r){return r.net<0}).forEach(function(r){
+    L.push(pn(r.id)+' הפסיד '+txt(-r.net/100)+':');
+    o.transfers.filter(function(t){return t.from===r.id}).forEach(function(t){L.push('  • חייב ל'+pn(t.to)+' '+txt(t.amt/100)+' מתוך ה-'+txt(-r.net/100))});
+  });
+  if(!o.transfers.length)L.push('הערב נסגר על אפס. אף אחד לא חייב כלום.');
+  return L.join('\n');
+}
+function palette(i){return'hsl('+((i*67+10)%360)+' 55% 55%)'}
+function checkIcon(){return'<svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="M3 8.5l3.2 3L13 4.5"/></svg>'}
+function barsHTML(rows){
+  var maxAbs=Math.max.apply(null,rows.map(function(r){return Math.abs(r.net)}).concat([1]));
+  return rows.slice().sort(function(a,b){return b.net-a.net}).map(function(r){
+    var w=Math.abs(r.net)/maxAbs*50;
+    return '<div class="brow"><span class="bn">'+lblOf(r)+'</span><div class="btrack">'+(r.net?'<i class="bfill '+(r.net>0?'w':'l')+'" style="width:'+w+'%"></i>':'')+'</div><b>'+mc(r.net/100)+'</b></div>';
+  }).join('');
+}
+function debtHTML(o,act){
+  var by={};o.rows.forEach(function(r){by[r.id]=r});
+  var lab=function(id){return by[id]?lblOf(by[id]):'?'};
+  var tr=function(t,label,other,extra){
+    var key=t.from+'>'+t.to,paid=!!o.paid[key];
+    return '<div class="tr'+(paid?' paid':'')+'"><button class="chk" role="checkbox" aria-checked="'+paid+'" aria-label="סמן כשולם" data-act="'+act+'" data-k="'+key+'">'+checkIcon()+'</button>'+
+      '<div class="what"><b>'+label+' '+lab(other)+'</b>'+(extra||'')+'</div><div class="amt">'+money(t.amt/100)+'</div></div>';
+  };
+  if(!o.transfers.length)return'<div class="card all-ok"><b>הערב נסגר על אפס</b><span class="muted">אף אחד לא חייב כלום לאף אחד.</span></div>';
+  var out='',split=function(ts){return'<div class="split" aria-hidden="true">'+ts.map(function(t,i){return'<i style="flex:'+t.amt+';background:'+palette(i)+'"></i>'}).join('')+'</div>'};
+  if(S.view==='debtor'){
+    o.rows.filter(function(r){return r.net<0}).sort(function(a,b){return a.net-b.net}).forEach(function(r){
+      var ts=o.transfers.filter(function(t){return t.from===r.id});
+      out+='<section class="card debt"><div class="debt-h"><b>'+lblOf(r)+' הפסיד '+money(-r.net/100)+'</b><small>'+ts.length+(ts.length===1?' תשלום':' תשלומים')+'</small></div>'+split(ts)+
+        ts.map(function(t){return tr(t,'חייב ל',t.to,'<small>מתוך ה-'+txt(-r.net/100)+' שהפסיד</small>')}).join('')+'</section>';
+    });
+  }else{
+    o.rows.filter(function(r){return r.net>0}).sort(function(a,b){return b.net-a.net}).forEach(function(r){
+      var ts=o.transfers.filter(function(t){return t.to===r.id});
+      out+='<section class="card debt"><div class="debt-h"><b>'+lblOf(r)+' הרוויח '+money(r.net/100)+'</b><small>'+ts.length+(ts.length===1?' תשלום':' תשלומים')+'</small></div>'+split(ts)+
+        ts.map(function(t){return tr(t,'מקבל מ',t.from)}).join('')+'</section>';
+    });
+  }
+  return out;
+}
+function resBody(o,live){
+  var act=live?'paid':'hpaid';
+  var actions=live?
+    '<div class="row-btns"><button class="btn btn-primary" data-act="newnight">סגור ערב</button><button class="btn" data-act="copy">העתק סיכום</button><a class="btn" target="_blank" rel="noopener" href="https://wa.me/?text='+encodeURIComponent(textOf(o))+'">שלח בוואטסאפ</a></div>':
+    '<div class="row-btns"><button class="btn" data-act="copy" data-src="h" data-id="'+o.id+'">העתק סיכום</button><a class="btn" target="_blank" rel="noopener" href="https://wa.me/?text='+encodeURIComponent(textOf(o))+'">שלח בוואטסאפ</a><button class="btn btn-ghost btn-danger" data-act="hdel" data-id="'+o.id+'">מחק מההיסטוריה</button></div>';
+  return '<div class="res-grid"><div class="col"><section class="panel"><h2>מי הרוויח ומי הפסיד</h2><div class="bars">'+barsHTML(o.rows)+'</div></section></div>'+
+    '<div class="col"><div style="display:grid;gap:12px"><h2 class="sec">מי חייב למי</h2>'+
+    '<div class="seg"><button data-act="view" data-v="debtor" aria-pressed="'+(S.view==='debtor')+'">לפי מי שחייב</button><button data-act="view" data-v="creditor" aria-pressed="'+(S.view==='creditor')+'">לפי מי שמקבל</button></div></div>'+
+    debtHTML(o,act)+actions+'</div></div>';
+}
+function rhead(o){
+  return '<div class="rhead"><div class="eyebrow">'+esc(o.title)+' · '+new Date(o.ts).toLocaleDateString('he-IL')+'</div><h1>סיכום הערב</h1><p class="muted">קופה '+money(o.potC/100)+' · '+o.transfers.length+' תשלומים סוגרים את הכול</p></div>';
+}
+function vResult(){
+  var o=snapOf();
+  return '<div class="wrap"><div class="top-simple"><button class="btn btn-ghost btn-sm" data-act="backfin">‹ עריכה</button><span></span><button class="btn btn-ghost btn-sm" data-act="home">בית</button></div>'+rhead(o)+resBody(o,true)+'</div>';
+}
+function vHView(){
+  var h=histById(S.hid);
+  if(!h)return vWelcome();
+  return '<div class="wrap"><div class="top-simple"><button class="btn btn-ghost btn-sm" data-act="home">‹ היסטוריה</button><span></span><span style="width:70px"></span></div>'+rhead(h)+resBody(h,false)+'</div>';
+}
+
+/* ---------- modal ---------- */
+function buyCheck(){
+  var g=S.game,p=pl(M.id),a=num(M.amt);
+  if(M.amt===''||isNaN(a))return{};
+  if(a<=0)return{err:'הכנס סכום גדול מאפס'};
+  if(g.limitOn){if(a<g.min)return{err:'מינימום לקנייה '+txt(g.min)};if(a>g.max)return{err:'מקסימום לקנייה '+txt(g.max)}}
+  if(p.budget!=null){var rem=r2(p.budget-buyTotal(p));if(a>rem+1e-9)return{err:'חורג מהתקציב. נשאר '+txt(Math.max(rem,0)),extend:true}}
+  return{ok:true,a:a};
+}
+function relCalc(){
+  var p=pl(M.id),b=buyTotal(p),v=num(M.val);
+  if(M.val===''||isNaN(v))return{};
+  if(v<0)return{err:'הסכום לא יכול להיות שלילי'};
+  var out;
+  if(M.mode==='out')out=v;else if(M.mode==='win')out=b+v;
+  else{if(v>b+1e-9)return{err:'אי אפשר להפסיד יותר מ-'+txt(b)};out=b-v}
+  out=r2(out);return{ok:true,out:out,net:r2(out-b)};
+}
+function addCheck(){
+  var g=S.game,f=num(M.first),bu=M.budget===''?null:num(M.budget);
+  if(!M.name.trim())return{err:'הכנס שם'};
+  if(isNaN(f)||f<=0)return{err:'הכנס סכום קנייה ראשונה'};
+  if(g.limitOn&&(f<g.min||f>g.max))return{err:'הקנייה חייבת להיות בין '+txt(g.min)+' ל-'+txt(g.max)};
+  if(bu!==null&&(isNaN(bu)||bu<f))return{err:'התקציב קטן מהקנייה הראשונה'};
+  return{ok:true,f:f,bu:bu};
+}
+function extCheck(){
+  var p=pl(M.id),a=num(M.amt);
+  if(M.amt===''||isNaN(a))return{};
+  if(a<=0)return{err:'הכנס סכום גדול מאפס'};
+  if(p.budget==null&&a<buyTotal(p))return{err:'התקציב קטן ממה שכבר נקנה ('+txt(buyTotal(p))+')'};
+  return{ok:true,a:a};
+}
+function errHTML(c){return c.err?'<p class="err">'+c.err+(c.extend?' <button class="link" data-act="toextend">הרחב תקציב</button>':'')+'</p>':''}
+function foot(){
+  if(!M)return'';
+  if(M.type==='buy'){var c=buyCheck();return errHTML(c)+'<button class="btn btn-primary" data-act="mok" '+(c.ok?'':'disabled')+'>הוסף '+(c.ok?txt(c.a):'קנייה')+'</button>'}
+  if(M.type==='release'){var r=relCalc();
+    return(r.ok?'<div class="prev"><span>יוצא עם <b>'+money(r.out)+'</b></span><span>'+(r.net>=0?'רווח':'הפסד')+' <b>'+mc(r.net)+'</b></span></div>':'')+errHTML(r)+'<button class="btn btn-primary" data-act="mok" '+(r.ok?'':'disabled')+'>שחרר שחקן</button>'}
+  if(M.type==='add'){var a=addCheck();return(a.err&&M.touched?'<p class="err">'+a.err+'</p>':'')+'<button class="btn btn-primary" data-act="mok" '+(a.ok?'':'disabled')+'>הוסף לשולחן</button>'}
+  if(M.type==='extend'){var e=extCheck(),p=pl(M.id);
+    return errHTML(e)+'<button class="btn btn-primary" data-act="mok" '+(e.ok?'':'disabled')+'>'+(p.budget==null?'קבע תקציב':'הרחב ב-'+(e.ok?txt(e.a):'סכום'))+'</button>'+(p.budget!=null?'<button class="btn btn-ghost btn-sm" data-act="nocap">בטל מגבלת תקציב</button>':'')}
+  if(M.type==='confirm')return'<button class="btn btn-primary '+(M.danger?'btn-danger':'')+'" data-act="mok">'+M.yesLabel+'</button><button class="btn btn-ghost" data-act="mclose">ביטול</button>';
+  if(M.type==='raise'){var rc=raiseCheck();return errHTML(rc)+'<button class="btn btn-primary" data-act="mok" '+(rc.ok?'':'disabled')+'>Raise '+(rc.ok?txt(rc.a):'')+'</button>'}
+  if(M.type==='pstart'){var pc=pStartCheck();return(pc.err?'<p class="err">'+pc.err+'</p>':'')+'<button class="btn btn-primary" data-act="mok" '+(pc.ok?'':'disabled')+'>התחל יד</button>'}
+  if(M.type==='bstart'){var bc=bStartCheck();return(bc.err?'<p class="err">'+bc.err+'</p>':'')+'<button class="btn btn-primary" data-act="mok" '+(bc.ok?'':'disabled')+'>התחל סיבוב</button>'}
+  if(M.type==='hwin')return'<button class="btn btn-primary" data-act="mok" '+((M.sel&&M.sel.length)?'':'disabled')+'>חלק את הקופה</button>';
+  if(M.type==='dealer')return'<button class="btn btn-primary" data-act="mok">קבע דילר</button>';
+  if(M.type==='copy')return'<button class="btn btn-ghost" data-act="mclose">סגור</button>';
+  return'';
+}
+function qchips(list,key){return'<div class="qchips">'+list.map(function(v){return'<button class="qc" data-act="mset" data-k="'+key+'" data-v="'+v+'" aria-pressed="'+(String(M[key])===String(v))+'">'+(key==='amt'&&(M.type==='extend'||M.type==='raise')?'+':'')+'₪'+fmt(v)+'</button>'}).join('')+'</div>'}
+function renderModal(){
+  var el=$('#modal');
+  if(!M){el.hidden=true;el.innerHTML='';return}
+  var title='',body='',g=S.game,p=M.id&&g?pl(M.id):null;
+  if(M.type==='buy'){
+    title='קנייה נוספת · '+esc(p.name);
+    var q=[];if(g.limitOn){q=[g.min];if(g.max!==g.min)q.push(g.max)}else q=[50,100,200];
+    if(p.budget!=null){var rem=r2(p.budget-buyTotal(p));q=q.filter(function(v){return v<=rem})}
+    body='<div class="prev"><span>קנה עד עכשיו <b>'+money(buyTotal(p))+'</b></span>'+(p.budget!=null?'<span>נשאר בתקציב <b>'+money(Math.max(0,r2(p.budget-buyTotal(p))))+'</b></span>':'')+'</div>'+
+      (g.limitOn?'<small>פתיחה מותרת: '+txt(g.min)+' עד '+txt(g.max)+'</small>':'')+
+      '<input class="input big-in" id="m-amt" data-m="amt" data-focus type="number" inputmode="decimal" value="'+esc(M.amt)+'" placeholder="סכום">'+(q.length?qchips(q,'amt'):'');
+  }else if(M.type==='release'){
+    var b=buyTotal(p);title='שחרור · '+esc(p.name);
+    body='<div class="prev"><span>קנה סה״כ <b>'+money(b)+'</b></span></div><div class="seg">'+
+      [['out','יצא עם'],['win','הרוויח'],['lose','הפסיד']].map(function(x){return'<button data-act="mset" data-k="mode" data-v="'+x[0]+'" aria-pressed="'+(M.mode===x[0])+'">'+x[1]+'</button>'}).join('')+'</div>'+
+      '<input class="input big-in" id="m-val" data-m="val" data-focus type="number" inputmode="decimal" min="0" value="'+esc(M.val)+'" placeholder="סכום ב-₪">'+
+      '<small>אחרי השחרור השחקן יוצא מהמשחק והרווח או ההפסד שלו נשמרים.</small>';
+  }else if(M.type==='add'){
+    title='הוספת שחקן';
+    body='<label class="field"><span>שם</span><input class="input" id="m-name" data-m="name" data-focus value="'+esc(M.name)+'" placeholder="שם השחקן" autocomplete="off"></label>'+
+      '<div class="two"><label class="field"><span>קנייה ראשונה (₪)</span><input class="input" id="m-first" data-m="first" type="number" inputmode="decimal" value="'+esc(M.first)+'"></label>'+
+      '<label class="field"><span>תקציב (₪)</span><input class="input" id="m-budget" data-m="budget" type="number" inputmode="decimal" value="'+esc(M.budget)+'" placeholder="ללא"></label></div>';
+  }else if(M.type==='extend'){
+    var has=p.budget!=null;title=(has?'הרחבת תקציב':'הגדרת תקציב')+' · '+esc(p.name);
+    body='<div class="prev"><span>קנה עד עכשיו <b>'+money(buyTotal(p))+'</b></span>'+(has?'<span>תקציב נוכחי <b>'+money(p.budget)+'</b></span>':'')+'</div>'+
+      '<input class="input big-in" id="m-amt" data-m="amt" data-focus type="number" inputmode="decimal" value="'+esc(M.amt)+'" placeholder="'+(has?'כמה להוסיף':'סכום תקציב')+'">'+
+      qchips(has?[50,100,200,400]:[200,400,600,1000],'amt')+
+      (has?'<div class="swrow"><div><b>החל על כל השחקנים</b><small>מוסיף לכל מי שיש לו תקציב ועוד במשחק</small></div><button class="sw" role="switch" aria-checked="'+(!!M.all)+'" aria-label="החל על כולם" data-act="mall"></button></div>':'');
+  }else if(M.type==='confirm'){
+    title=M.title;body='<p class="muted">'+M.text+'</p>';
+  }else if(M.type==='raise'){
+    title='Raise · העלאה';var hh=g.hand,ra2=num(M.amt),lm=raiseLimits();
+    var rq=[];[lm.min,lm.min*2,lm.max].forEach(function(v){v=r2(v);if(v>0&&v<=lm.max&&rq.indexOf(v)<0)rq.push(v)});
+    body='<div class="prev"><span>הימור נוכחי <b>'+money(hh.bet)+'</b></span><span>אחרי העלאה <b>'+money(r2(hh.bet+(isNaN(ra2)?0:ra2)))+'</b></span></div>'+
+      '<small>מינימום העלאה '+txt(lm.min)+' · מקסימום '+txt(lm.max)+' ('+(MODES[hh.mode]||'')+')</small>'+
+      '<input class="input big-in" id="m-amt" data-m="amt" data-focus type="number" inputmode="decimal" value="'+esc(M.amt)+'" placeholder="סכום ההעלאה">'+(rq.length?qchips(rq,'amt'):'')+
+      '<div class="swrow"><div><b>כולם משווים מיד</b><small>מבצע Call לכל מי שעדיין ביד</small></div><button class="sw" role="switch" aria-checked="'+(!!M.call)+'" aria-label="כולם משווים מיד" data-act="mcall"></button></div>';
+  }else if(M.type==='pstart'){
+    title='התחלת יד';
+    var modeBtns=[['nl','נו לימיט'],['pl','פוט לימיט'],['cap','מקסימום קבוע']].map(function(x){return'<button data-act="mset" data-k="mode" data-v="'+x[0]+'" aria-pressed="'+(M.mode===x[0])+'">'+x[1]+'</button>'}).join('');
+    var modeNote={nl:'נו לימיט: אפשר להעלות עד כל הכסף שעל השולחן. מינימום העלאה הוא גודל ההעלאה האחרונה, ובהתחלה ה-Big blind.',pl:'פוט לימיט: מקסימום העלאה הוא גודל הקופה. מינימום העלאה הוא גודל ההעלאה האחרונה.',cap:'מקסימום קבוע: אף העלאה לא יכולה לעבור את הסכום שקבעת. מינימום העלאה הוא גודל ההעלאה האחרונה.'}[M.mode];
+    body='<div class="two"><label class="field"><span>Small blind (₪)</span><input class="input" id="m-sb" data-m="sb" data-focus type="number" inputmode="decimal" value="'+esc(M.sb)+'"></label>'+
+      '<label class="field"><span>Big blind · מינימום (₪)</span><input class="input" id="m-bb" data-m="bb" type="number" inputmode="decimal" value="'+esc(M.bb)+'"></label></div>'+
+      '<div class="seg">'+modeBtns+'</div>'+
+      (M.mode==='cap'?'<label class="field"><span>מקסימום להעלאה (₪)</span><input class="input" id="m-cap" data-m="cap" type="number" inputmode="decimal" value="'+esc(M.cap)+'"></label>':'')+
+      '<small>'+modeNote+' הבליינדים נגבים אוטומטית מהשחקנים שאחרי הדילר, והדילר מתחלף בסוף כל יד.</small>';
+  }else if(M.type==='bstart'){
+    title='התחלת סיבוב';
+    var payBtns=[['1.5','3:2'],['1.2','6:5']].map(function(x){return'<button data-act="mset" data-k="pay" data-v="'+x[0]+'" aria-pressed="'+(String(M.pay)===x[0])+'">'+x[1]+'</button>'}).join('');
+    body='<div class="two"><label class="field"><span>הימור מינימום (₪)</span><input class="input" id="m-min" data-m="min" data-focus type="number" inputmode="decimal" value="'+esc(M.min)+'"></label>'+
+      '<label class="field"><span>הימור מקסימום (₪)</span><input class="input" id="m-max" data-m="max" type="number" inputmode="decimal" value="'+esc(M.max)+'"></label></div>'+
+      '<div style="display:grid;gap:6px"><span class="lbl">תשלום על בלאק ג׳ק</span><div class="seg">'+payBtns+'</div></div>'+
+      '<small>כל שחקן מהמר בין המינימום למקסימום. דאבל ופיצול דורשים שיהיה מספיק כסף על השולחן. הדילר משלם ומקבל מול השחקנים.</small>';
+  }else if(M.type==='hwin'){
+    title='מי זכה בקופה?';var hw=g.hand;
+    var wc=g.players.filter(function(q){return!q.bank&&!q.released&&!hw.f[q.id]});
+    body='<div class="prev"><span>קופת היד <b>'+money(hw.pot)+'</b></span></div><div class="qchips">'+
+      wc.map(function(q){return'<button class="qc" data-act="hsel" data-id="'+q.id+'" aria-pressed="'+((M.sel||[]).indexOf(q.id)>-1)+'">'+esc(q.name)+'</button>'}).join('')+'</div>'+
+      '<small>בחירה של כמה זוכים מחלקת את הקופה שווה בשווה. אין חישוב של קופות צד: מי שהלך אול-אין עם פחות כסף עדיין נחשב לזוכה על כל הקופה.</small>';
+  }else if(M.type==='dealer'){
+    title='מי הדילר?';
+    var cands=g.players.filter(function(q){return!q.bank&&!q.released});
+    var chipB=function(v,l){return'<button class="qc" data-act="mset" data-k="sel" data-v="'+v+'" aria-pressed="'+(M.sel===v)+'">'+l+'</button>'};
+    body='<div class="qchips">'+cands.map(function(q){return chipB('p:'+q.id,esc(q.name))}).join('')+chipB('ext','דילר חיצוני')+chipB('none','אין דילר')+'</div>'+
+      (M.sel==='ext'?'<label class="field"><span>שם הדילר</span><input class="input" id="m-name" data-m="name" data-focus value="'+esc(M.name)+'" placeholder="דילר" autocomplete="off"></label>':'')+
+      '<small>הדילר מסומן ליד שמו בסוגריים.</small>';
+  }else if(M.type==='copy'){
+    title='העתק ידנית';body='<textarea class="input" id="m-copy" readonly data-focus>'+esc(M.text)+'</textarea>';
+  }
+  el.hidden=false;
+  el.innerHTML='<div class="ov" data-ov="1"><div class="sheet" role="dialog" aria-modal="true" aria-label="'+title.replace(/<[^>]*>/g,'')+'"><div class="sheet-h"><h3>'+title+'</h3><button class="x" data-act="mclose" aria-label="סגור">×</button></div>'+body+'<div class="sheet-f" id="mfoot">'+foot()+'</div></div></div>';
+  var f=el.querySelector('[data-focus]');
+  if(f){try{f.focus();if(f.select)f.select()}catch(e){}}
+}
+function openModal(m){M=m;renderModal()}
+function closeModal(){M=null;renderModal()}
+function updFoot(){var f=$('#mfoot');if(f)f.innerHTML=foot()}
+
+/* ---------- render ---------- */
+function render(){
+  var type='poker';
+  if(S.screen==='setup')type=S.setup.type;
+  else if(S.screen==='hview'){var hh=histById(S.hid);if(hh)type=hh.type}
+  else if(S.screen!=='welcome'&&S.game)type=S.game.type;
+  document.documentElement.setAttribute('data-game',type);
+  var v={welcome:vWelcome,setup:vSetup,game:vGame,finish:vFinish,result:vResult,hview:vHView}[S.screen]||vWelcome;
+  $('#app').innerHTML=v();
+  save();renderModal();
+}
+
+/* ---------- actions ---------- */
+function startGame(){
+  var s=S.setup,err=$('#serr');
+  var min=num(s.min),max=num(s.max),first=num(s.first),bud=num(s.budget);
+  var minCount=(s.role==='dealer'&&s.bank)?1:2,fail=function(m){err.textContent=m;err.scrollIntoView({block:'center'})};
+  if(s.count<minCount)return fail('צריך לפחות '+minCount+' שחקנים');
+  if(isNaN(first)||first<=0)return fail('הכנס סכום לקנייה ראשונה');
+  if(s.limitOn){if(isNaN(min)||isNaN(max)||min<=0||max<min)return fail('המינימום חייב להיות גדול מאפס ולא גדול מהמקסימום');
+    if(first<min||first>max)return fail('הקנייה הראשונה חייבת להיות בין '+txt(min)+' ל-'+txt(max))}
+  if(s.budgetOn){if(isNaN(bud)||bud<first)return fail('התקציב קטן מהקנייה הראשונה')}
+  var players=[],real=[],bankP=null,used={};
+  var uniq=function(n){var b=n,k=2;while(used[n]){n=b+' '+k;k++}used[n]=1;return n};
+  if(s.role==='dealer'&&s.bank){bankP={id:uid(),name:uniq((s.myName||'').trim()||'הבנק'),tag:'',bank:true,budget:null,buys:[],out:null,released:false};players.push(bankP)}
+  for(var i=0;i<s.count;i++){
+    var nm=(s.names[i]||'').trim()||(i===0&&s.role==='player'?'אני':'שחקן '+(i+1));
+    var p={id:uid(),name:uniq(nm),tag:(i===0&&s.role==='player')?'me':'',bank:false,budget:s.budgetOn?bud:null,buys:[first],out:null,released:false};
+    players.push(p);real.push(p);
+  }
+  var dealer={mode:'none'};
+  if(s.role==='dealer'){dealer=bankP?{mode:'player',pid:bankP.id}:{mode:'external',name:(s.myName||'').trim()||'אני'}}
+  else if(s.dealerMode==='player'){var di=Math.max(0,Math.min(Number(s.dealerIdx)||0,real.length-1));dealer={mode:'player',pid:real[di].id}}
+  else if(s.dealerMode==='external'){dealer={mode:'external',name:(s.dealerName||'').trim()||'דילר'}}
+  S.game={id:uid(),ts:Date.now(),type:s.type,title:(s.title||'').trim(),role:s.role,limitOn:s.limitOn,min:s.limitOn?min:0,max:s.limitOn?max:0,first:first,defBudget:s.budgetOn?bud:null,
+    dealer:dealer,players:players,stage:'game'};
+  S.finalIn={};S.paid={};S.view='debtor';
+  go('game');
+}
+function raiseCheck(){
+  var a=num(M.amt);if(M.amt===''||isNaN(a))return{};
+  if(a<=0)return{err:'הכנס סכום גדול מאפס'};
+  var l=raiseLimits();
+  if(a>l.max+1e-9)return{err:'מקסימום העלאה '+txt(l.max)};
+  if(a<l.min-1e-9&&Math.abs(a-l.max)>1e-9)return{err:'מינימום העלאה '+txt(l.min)};
+  return{ok:true,a:a};
+}
+function doRaise(){
+  var c=raiseCheck();if(!c.ok)return;var a=c.a,g=S.game,h=g.hand,call=M.call,cap=[];
+  h.bet=r2(h.bet+a);h.last=a;if(call)cap=hCall();
+  closeModal();render();toast('Raise '+txt(a)+(call?' · כולם השוו':'')+(cap.length?' · '+cap.join(', ')+' אול-אין':''));
+}
+function pStartCheck(){
+  var sb=num(M.sb),bb=num(M.bb),cap=num(M.cap);
+  if(isNaN(sb)||sb<=0)return{err:'הכנס Small blind'};
+  if(isNaN(bb)||bb<sb)return{err:'ה-Big blind צריך להיות לפחות כמו ה-Small blind'};
+  if(M.mode==='cap'&&(isNaN(cap)||cap<bb))return{err:'מקסימום ההעלאה צריך להיות לפחות כמו ה-Big blind'};
+  return{ok:true,sb:sb,bb:bb,cap:M.mode==='cap'?cap:(isNaN(cap)?100:cap)};
+}
+function doPstart(){
+  var c=pStartCheck();if(!c.ok)return;
+  var g=S.game,seats=pokerSeats();
+  if(!seats){closeModal();toast('צריך לפחות שני שחקנים עם כסף');return}
+  var h={t:'pk',bet:c.bb,pot:0,c:{},f:{},sb:seats.sb.id,bb:seats.bb.id,sbA:c.sb,bbA:c.bb,blind:c.bb,last:c.bb,mode:M.mode,cap:c.cap};
+  g.pcfg={sb:c.sb,bb:c.bb,mode:M.mode,cap:c.cap};g.hand=h;
+  var post=function(p,a){var pay=Math.min(a,Math.max(0,stackOf(p)));h.c[p.id]=r2((h.c[p.id]||0)+pay);p.adj=r2((p.adj||0)-pay);h.pot=r2(h.pot+pay)};
+  post(seats.sb,c.sb);post(seats.bb,c.bb);
+  closeModal();render();toast('SB: '+seats.sb.name+' · BB: '+seats.bb.name);
+}
+function bStartCheck(){
+  var mn=num(M.min),mx=num(M.max);
+  if(isNaN(mn)||mn<=0)return{err:'הכנס הימור מינימום'};
+  if(isNaN(mx)||mx<mn)return{err:'המקסימום צריך להיות לפחות כמו המינימום'};
+  return{ok:true,min:mn,max:mx};
+}
+function doBstart(){
+  var c=bStartCheck();if(!c.ok)return;
+  var g=S.game,pay=Number(M.pay)||1.5;
+  g.bcfg={min:c.min,max:c.max,pay:pay};
+  var h={t:'bj',min:c.min,max:c.max,pay:pay,phase:'bet',p:{}};
+  bjPlayers().forEach(function(p){var poor=stackOf(p)<c.min;h.p[p.id]={out:poor,hands:[{bet:c.min,res:null,dbl:false}]}});
+  g.hand=h;closeModal();render();
+}
+function doBdeal(){
+  var g=S.game,h=g.hand,bad=null,any=false;
+  bjPlayers().forEach(function(p){
+    var e=h.p[p.id];if(!e||e.out)return;any=true;
+    var b=num(e.hands[0].bet);
+    if(isNaN(b)||b<h.min||b>h.max)bad=p.name+': הימור בין '+txt(h.min)+' ל-'+txt(h.max);
+    else if(b>stackOf(p)+1e-9)bad=p.name+': אין מספיק כסף להימור';
+    else e.hands[0].bet=b;
+  });
+  if(bad){toast(bad);return}
+  if(!any){toast('אף שחקן לא מהמר');return}
+  h.phase='play';render();
+}
+function doBend(){
+  var g=S.game,h=g.hand,missing=null,tot=0,hp=houseP(),capped=[];
+  bjPlayers().forEach(function(p){var e=h.p[p.id];if(!e||e.out)return;e.hands.forEach(function(x){if(!x.res)missing=p.name})});
+  if(missing){toast('חסרה תוצאה ל'+missing);return}
+  bjPlayers().forEach(function(p){
+    var e=h.p[p.id];if(!e||e.out)return;
+    var d=r2(e.hands.reduce(function(a,x){return a+handDelta(x,h.pay)},0)),st=Math.max(0,stackOf(p));
+    if(d<-st){d=-st;capped.push(p.name)}
+    p.adj=r2((p.adj||0)+d);tot=r2(tot+d);
+  });
+  if(hp&&!hp.bank)hp.adj=r2((hp.adj||0)-tot);
+  g.hand=null;g.hands=(g.hands||0)+1;render();
+  toast('הסיבוב נסגר'+(capped.length?' · ההפסד של '+capped.join(', ')+' הוגבל לכסף שנשאר':''));
+}
+function doHwin(){
+  var g=S.game,h=g.hand,ids=M.sel||[];if(!ids.length)return;
+  var potC=toC(h.pot),n=ids.length,share=Math.floor(potC/n),rem=potC-share*n;
+  ids.forEach(function(id,i){var p=pl(id);p.adj=r2((p.adj||0)+(share+(i===0?rem:0))/100)});
+  g.hand=null;g.hands=(g.hands||0)+1;rotateDealer();closeModal();render();toast('הקופה חולקה. הדילר עבר הלאה');
+}
+function doDealer(){
+  var g=S.game;
+  if(M.sel==='none')g.dealer={mode:'none'};
+  else if(M.sel==='ext')g.dealer={mode:'external',name:(M.name||'').trim()||'דילר'};
+  else g.dealer={mode:'player',pid:M.sel.slice(2)};
+  closeModal();render();
+}
+function doBuy(){var c=buyCheck();if(!c.ok)return;var p=pl(M.id);p.buys.push(c.a);closeModal();render();toast('נוספה קנייה של '+txt(c.a)+' ל'+p.name)}
+function doRelease(){var r=relCalc();if(!r.ok)return;var p=pl(M.id);p.released=true;p.out=r.out;delete S.finalIn[p.id];closeModal();render();toast(p.name+' שוחרר · '+txt(r.net,true))}
+function doAdd(){var a=addCheck();if(!a.ok)return;var g=S.game;
+  var names=g.players.map(function(p){return p.name}),n=M.name.trim(),b=n,k=2;while(names.indexOf(n)>-1){n=b+' '+k;k++}
+  g.players.push({id:uid(),name:n,tag:'',bank:false,budget:a.bu,buys:[a.f],out:null,released:false});closeModal();render();toast(n+' הצטרף לשולחן')}
+function doExtend(){var e=extCheck();if(!e.ok)return;var g=S.game,p=pl(M.id);
+  if(p.budget==null)p.budget=e.a;
+  else if(M.all)g.players.forEach(function(q){if(!q.bank&&!q.released&&q.budget!=null)q.budget=r2(q.budget+e.a)});
+  else p.budget=r2(p.budget+e.a);
+  closeModal();render();toast('התקציב עודכן')}
+function copyText(text){
+  var done=function(){toast('הסיכום הועתק')};
+  var fallback=function(){openModal({type:'copy',text:text})};
+  try{navigator.clipboard.writeText(text).then(done,fallback)}catch(e){fallback()}
+}
+
+document.addEventListener('click',function(e){
+  var t=e.target;
+  if(t.dataset&&t.dataset.ov&&M){closeModal();return}
+  var el=t.closest('[data-act]');if(!el)return;
+  var a=el.dataset.act,id=el.dataset.id,s=S.setup,g=S.game;
+  switch(a){
+    case'new':if(S.game)openModal({type:'confirm',title:'להתחיל ערב חדש?',text:'יש ערב פתוח. התחלת ערב חדש תמחק אותו.',yesLabel:'התחל ערב חדש',danger:false,yes:'newsetup'});else go('setup');break;
+    case'newsetup':S.game=null;go('setup');break;
+    case'pick':s.type=el.dataset.v;if(S.game){openModal({type:'confirm',title:'להתחיל ערב חדש?',text:'יש ערב פתוח. התחלת ערב חדש תמחק אותו.',yesLabel:'התחל ערב חדש',yes:'newsetup'})}else go('setup');break;
+    case'resume':go(S.game.stage||'game');break;
+    case'discard':openModal({type:'confirm',title:'למחוק את הערב?',text:'כל הנתונים של הערב הפתוח יימחקו ולא ניתן לשחזר.',yesLabel:'מחק ערב',danger:true,yes:'discardnow'});break;
+    case'home':if(S.screen==='setup'||!S.game){go('welcome')}else{S.screen='welcome';render();try{window.scrollTo(0,0)}catch(x){}}break;
+    case'type':s.type=el.dataset.v;render();break;
+    case'role':s.role=el.dataset.v;render();break;
+    case'count':s.count=Math.max(1,Math.min(12,s.count+Number(el.dataset.d)));render();break;
+    case'tg':s[el.dataset.k]=!s[el.dataset.k];render();break;
+    case'start':startGame();break;
+    case'buy':var bp=pl(id),dflt=g.limitOn?g.min:(g.first||100);openModal({type:'buy',id:id,amt:String(dflt)});break;
+    case'extend':openModal({type:'extend',id:id,amt:pl(id).budget==null?'400':'100',all:false});break;
+    case'release':openModal({type:'release',id:id,mode:'out',val:showStack()?String(stackOf(pl(id))):''});break;
+    case'unrelease':var up=pl(id);up.released=false;up.out=null;render();break;
+    case'undo':var ps=pl(id);ps.buys.pop();render();break;
+    case'addp':openModal({type:'add',name:'',first:String(g.limitOn?Math.max(g.min,Math.min(g.first||g.min,g.max)):(g.first||100)),budget:g.defBudget==null?'':String(g.defBudget)});break;
+    case'finish':if(g.hand){hCancel();toast('היד הפתוחה בוטלה')}if(g.hands>0)g.players.forEach(function(q){if(!q.bank&&!q.released&&S.finalIn[q.id]===undefined)S.finalIn[q.id]=String(stackOf(q))});go('finish');break;
+    case'backgame':go('game');break;
+    case'backfin':go('finish');break;
+    case'fill':var f=finState();S.finalIn[id]=String(f.left);render();break;
+    case'calc':recordHistory();go('result');break;
+    case'view':S.view=el.dataset.v;render();break;
+    case'paid':S.paid[el.dataset.k]=!S.paid[el.dataset.k];recordHistory();render();break;
+    case'hpaid':var hp=histById(S.hid);if(hp){hp.paid[el.dataset.k]=!hp.paid[el.dataset.k];if(S.game&&S.game.id===hp.id)S.paid=Object.assign({},hp.paid)}render();break;
+    case'copy':copyText(textOf(el.dataset.src==='h'?histById(el.dataset.id):snapOf()));break;
+    case'newnight':recordHistory();S.game=null;S.finalIn={};S.paid={};S.screen='welcome';render();try{window.scrollTo(0,0)}catch(x){}toast('הערב נסגר ונשמר בהיסטוריה');break;
+    case'hstart':if(g.type==='poker'){var pc0=g.pcfg||{sb:5,bb:10,mode:'nl',cap:100};openModal({type:'pstart',sb:String(pc0.sb),bb:String(pc0.bb),mode:pc0.mode,cap:String(pc0.cap)})}
+      else if(g.type==='blackjack'){var bc0=g.bcfg||{min:10,max:100,pay:1.5};openModal({type:'bstart',min:String(bc0.min),max:String(bc0.max),pay:String(bc0.pay)})}break;
+    case'bout':var bo=g.hand.p[id];bo.out=!bo.out;render();break;
+    case'bstep':var bs=g.hand.p[id],h0=bs.hands[0],cur=num(h0.bet)||g.hand.min;h0.bet=Math.max(g.hand.min,Math.min(g.hand.max,Math.max(g.hand.min,Math.min(stackOf(pl(id)),cur+Number(el.dataset.d)*g.hand.min))));render();break;
+    case'bdeal':doBdeal();break;
+    case'bres':var bx=g.hand.p[id].hands[Number(el.dataset.i)];bx.res=bx.res===el.dataset.v?null:el.dataset.v;render();break;
+    case'bdbl':var be=g.hand.p[id],bd=be.hands[Number(el.dataset.i)];
+      if(!bd.dbl){var ex=be.hands.reduce(function(a,y){return a+(num(y.bet)||0)*(y.dbl?2:1)},0)+(num(bd.bet)||0);if(ex>stackOf(pl(id))+1e-9){toast('אין מספיק כסף לדאבל');break}bd.dbl=true;if(bd.res==='bj'||bd.res==='sur')bd.res=null}else bd.dbl=false;
+      render();break;
+    case'bsplit':var sp=g.hand.p[id];
+      if(sp.hands.length>=4){toast('אפשר לפצל עד ארבע ידיים');break}
+      var sb0=num(sp.hands[0].bet)||0,sex=sp.hands.reduce(function(a,y){return a+(num(y.bet)||0)*(y.dbl?2:1)},0)+sb0;
+      if(sex>stackOf(pl(id))+1e-9){toast('אין מספיק כסף לפיצול');break}
+      sp.hands.push({bet:sb0,res:null,dbl:false});sp.hands.forEach(function(y){if(y.res==='bj'||y.res==='sur')y.res=null});render();break;
+    case'bend':doBend();break;
+    case'hraise':if(g.hand){var rl=raiseLimits();openModal({type:'raise',amt:String(Math.min(rl.min,rl.max)),call:true})}break;
+    case'hcall':if(g.hand){var cap=hCall();render();toast(cap.length?cap.join(', ')+' הלך אול-אין':'כולם השוו')}break;
+    case'hfold':if(g.hand){g.hand.f[id]=!g.hand.f[id];render()}break;
+    case'hcancel':hCancel();render();toast('היד בוטלה והכסף הוחזר');break;
+    case'hend':if(g.hand){var wl=g.players.filter(function(q){return!q.bank&&!q.released&&!g.hand.f[q.id]});openModal({type:'hwin',sel:wl.length===1?[wl[0].id]:[]})}break;
+    case'hsel':var ix=M.sel.indexOf(id);if(ix>-1)M.sel.splice(ix,1);else M.sel.push(id);renderModal();break;
+    case'mcall':M.call=!M.call;renderModal();break;
+    case'dmode':s.dealerMode=el.dataset.v;render();break;
+    case'dealer':var dd=dealerOf();openModal({type:'dealer',sel:dd.mode==='player'?'p:'+dd.pid:(dd.mode==='external'?'ext':'none'),name:dd.name||''});break;
+    case'hopen':S.hid=id;go('hview');break;
+    case'hdel':openModal({type:'confirm',title:'למחוק מההיסטוריה?',text:'הערב יימחק לצמיתות ולא ניתן לשחזר אותו.',yesLabel:'מחק ערב',danger:true,yes:'hdelnow',hid:id});break;
+    case'mclose':closeModal();break;
+    case'mset':M[el.dataset.k]=el.dataset.v;renderModal();break;
+    case'mall':M.all=!M.all;renderModal();break;
+    case'toextend':M={type:'extend',id:M.id,amt:'100',all:false};renderModal();break;
+    case'nocap':pl(M.id).budget=null;closeModal();render();break;
+    case'mok':
+      if(M.type==='buy')doBuy();else if(M.type==='release')doRelease();else if(M.type==='add')doAdd();else if(M.type==='extend')doExtend();else if(M.type==='dealer')doDealer();else if(M.type==='raise')doRaise();else if(M.type==='pstart')doPstart();else if(M.type==='bstart')doBstart();else if(M.type==='hwin')doHwin();
+      else if(M.type==='confirm'){var y=M.yes,hid=M.hid;closeModal();if(y==='newsetup'){S.game=null;go('setup')}else if(y==='discardnow'){S.game=null;S.finalIn={};S.paid={};render()}else if(y==='hdelnow'){S.history=S.history.filter(function(x){return x.id!==hid});if(S.screen==='hview')S.screen='welcome';render();toast('הערב נמחק מההיסטוריה')}}
+      break;
+  }
+});
+document.addEventListener('input',function(e){
+  var t=e.target;
+  if(t.dataset.bet){var bi=S.game&&S.game.hand&&S.game.hand.p&&S.game.hand.p[t.dataset.bet];if(bi)bi.hands[0].bet=t.value;save();return}
+  if(t.dataset.name!==undefined){S.setup.names[Number(t.dataset.name)]=t.value;updDealerSel();save();return}
+  if(t.dataset.field){S.setup[t.dataset.field]=t.value;save();return}
+  if(t.dataset.fin){S.finalIn[t.dataset.fin]=t.value;
+    var p=pl(t.dataset.fin),n=num(t.value),sp=$('#fn-'+t.dataset.fin);if(sp)sp.innerHTML=isNaN(n)?'':mc(r2(n-buyTotal(p)));
+    var fs=$('#fsum');if(fs)fs.innerHTML=finSummary();save();return}
+  if(t.dataset.m&&M){M[t.dataset.m]=t.value;if(M.type==='add')M.touched=true;
+    if(M.type==='buy'||M.type==='extend'||M.type==='raise'){var chips=document.querySelectorAll('#modal .qc');chips.forEach(function(c){c.setAttribute('aria-pressed',String(c.dataset.v===t.value))})}
+    updFoot()}
+});
+document.addEventListener('keydown',function(e){
+  if(e.key==='Escape'&&M)closeModal();
+  if(e.key==='Enter'&&M&&e.target.tagName==='INPUT'){var b=$('#mfoot [data-act="mok"]');if(b&&!b.disabled){e.preventDefault();b.click()}}
+});
+
+render();
+})();
+</script>
+
+
+</body></html>
